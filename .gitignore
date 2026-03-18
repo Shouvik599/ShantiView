@@ -49,6 +49,9 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 
+# Large binaries
+ffmpeg/
+
 # Translations
 *.mo
 *.pot
