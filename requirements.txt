@@ -1,0 +1,14 @@
+Flask
+python-dotenv
+google-generativeai
+opencv-python
+deepface
+tensorflow
+keras
+numpy
+librosa
+scikit-learn
+kagglehub
+torch
+tf-keras
+ipykernel

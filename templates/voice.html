@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShantiView - Voice Analysis</title>
+    <!-- Use Inter font for a clean, modern look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .btn-gradient {
+            background-image: linear-gradient(to right, #6EE7B7, #3B82F6, #9333EA);
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .btn-gradient:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .text-statement {
+            font-size: 1.25rem; /* Equivalent to text-xl */
+            line-height: 1.75rem; /* Equivalent to leading-7 */
+        }
+        @media (min-width: 768px) {
+            .text-statement {
+                font-size: 1.5rem; /* Equivalent to md:text-2xl */
+                line-height: 2rem; /* Equivalent to md:leading-8 */
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-200 min-h-screen flex flex-col items-center justify-center p-4 md:p-8">
+
+    <!-- Header -->
+    <header class="flex items-center justify-center mb-8">
+        <svg class="h-10 w-10 text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 21.5c-4.4 0-8-3.6-8-8 0-4.4 3.6-8 8-8s8 3.6 8 8c0 4.4-3.6 8-8 8z" />
+            <path d="M12 10a2 2 0 100 4 2 2 0 000-4z" />
+            <path d="M16 16l-1 1" />
+            <path d="M8 16l1 1" />
+            <path d="M16 8l1-1" />
+            <path d="M8 8l-1-1" />
+        </svg>
+        <h1 class="text-3xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 via-blue-500 to-purple-600 ml-4">
+            ShantiView
+        </h1>
+    </header>
+
+    <main class="text-center p-8 max-w-2xl w-full">
+        <h2 class="text-2xl md:text-4xl font-semibold text-white mb-4">
+            Voice Emotion Detector
+        </h2>
+        <p class="mt-4 text-lg text-gray-400 leading-relaxed mb-8">
+            Please read the statement below and record your voice.
+        </p>
+        
+        <!-- Statement Display -->
+        <div class="bg-gray-800 p-6 rounded-xl w-full shadow-lg mb-6">
+            <p id="statementText" class="text-statement text-gray-100 font-semibold italic">...</p>
+        </div>
+
+        <div class="flex flex-col items-center space-y-6">
+            <!-- New Statement and Recording Controls -->
+            <div class="flex flex-wrap justify-center space-x-4 mb-4">
+                <button id="newStatementButton" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-full transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                    New Statement
+                </button>
+                <button id="recordButton" class="btn-gradient text-white font-semibold py-3 px-6 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                    Start Recording
+                </button>
+                <button id="stopButton" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-full transition-all duration-300 transform hover:scale-105" disabled>
+                    Stop Recording
+                </button>
+            </div>
+            
+            <!-- Result display area -->
+            <div id="resultBox" class="bg-gray-800 p-6 rounded-xl w-full shadow-lg">
+                <h3 class="text-xl font-bold text-gray-300 mb-2">Prediction:</h3>
+                <p id="predictionText" class="text-3xl font-extrabold text-blue-400">...</p>
+                <div id="loadingIndicator" class="hidden mt-4">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto"></div>
+                    <p class="text-gray-400 text-sm mt-2">Analyzing...</p>
+                </div>
+            </div>
+
+            <!-- Submit Button to Questionnaire -->
+            <button id="analyzeButton" class="btn-gradient text-white font-bold px-8 py-4 rounded-full text-lg shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 mt-6" disabled>
+                Analyze Voice
+            </button>
+            
+            <button id="submitButton" class="btn-gradient text-white font-bold px-8 py-4 rounded-full text-lg shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 mt-6" disabled>
+                Proceed
+            </button>
+        </div>
+    </main>
+
+    <script>
+        const recordButton = document.getElementById('recordButton');
+        const stopButton = document.getElementById('stopButton');
+        const newStatementButton = document.getElementById('newStatementButton');
+        const analyzeButton = document.getElementById('analyzeButton');
+        const submitButton = document.getElementById('submitButton');
+        const statementText = document.getElementById('statementText');
+        const predictionText = document.getElementById('predictionText');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+
+        let mediaRecorder;
+        let audioChunks = [];
+        let recordedAudioBlob;
+
+        // List of random statements
+        const statements = [
+            "The sun rises over the distant mountains.",
+            "I am incredibly happy about the news!",
+            "I'm feeling very sad about what happened.",
+            "I am extremely angry and frustrated right now.",
+            "I am so excited for the new project.",
+            "This is the most disgusting thing I have ever seen.",
+            "What a surprising turn of events!",
+            "I am feeling very calm and peaceful today.",
+            "Why is this happening to me?",
+            "The weather forecast predicts rain all day.",
+            "I can't believe we won the game!",
+            "My favorite book is on the top shelf."
+        ];
+
+        // Function to display a random statement
+        function displayRandomStatement() {
+            const randomIndex = Math.floor(Math.random() * statements.length);
+            statementText.textContent = statements[randomIndex];
+            // Reset UI for new recording
+            predictionText.textContent = '...';
+            submitButton.disabled = true;
+            analyzeButton.disabled = true;
+        }
+
+        // Event listener for New Statement button
+        newStatementButton.onclick = displayRandomStatement;
+
+        // Event listener for Proceed button
+        submitButton.onclick = () => {
+            window.location.href = "{{ url_for('questionnaire') }}";
+        };
+
+        recordButton.onclick = async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = event => {
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = () => {
+                    recordedAudioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    stream.getTracks().forEach(track => track.stop());
+                    
+                    // Enable the Analyze button after recording stops
+                    analyzeButton.disabled = false;
+                };
+
+                mediaRecorder.start();
+                recordButton.disabled = true;
+                stopButton.disabled = false;
+                newStatementButton.disabled = true;
+                analyzeButton.disabled = true;
+                submitButton.disabled = true;
+                predictionText.textContent = 'Recording...';
+                loadingIndicator.classList.add('hidden');
+            } catch (error) {
+                console.error('Error accessing microphone:', error);
+                predictionText.textContent = 'Microphone access denied or error.';
+                newStatementButton.disabled = false;
+            }
+        };
+
+        stopButton.onclick = () => {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+            }
+            recordButton.disabled = false;
+            stopButton.disabled = true;
+            newStatementButton.disabled = false;
+            predictionText.textContent = 'Recording stopped. Click "Analyze Voice" to submit.';
+        };
+
+        analyzeButton.onclick = () => {
+            if (recordedAudioBlob) {
+                sendAudioForPrediction(recordedAudioBlob);
+            }
+        };
+
+        async function sendAudioForPrediction(audioBlob) {
+            loadingIndicator.classList.remove('hidden');
+            predictionText.textContent = 'Analyzing...';
+            analyzeButton.disabled = true;
+
+            const formData = new FormData();
+            formData.append('audio_file', audioBlob, 'audio.wav');
+
+            try {
+                const response = await fetch('/predict_audio', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.error) {
+                        predictionText.textContent = `Error: ${data.error}`;
+                    } else {
+                        const formattedEmotion = data.emotion.charAt(0).toUpperCase() + data.emotion.slice(1);
+                        predictionText.textContent = formattedEmotion;
+
+                        // Save result to localStorage to be used on the results page
+                        localStorage.setItem('mm_voice_emotion', data.emotion);
+
+                        submitButton.disabled = false; // Enable submit button on success
+                    }
+                } else {
+                    const errorData = await response.json();
+                    predictionText.textContent = `Server Error: ${errorData.error}`;
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                predictionText.textContent = 'Network or server error.';
+            } finally {
+                loadingIndicator.classList.add('hidden');
+                analyzeButton.disabled = false;
+            }
+        }
+
+        // Initial call to display a random statement on page load
+        window.onload = displayRandomStatement;
+    </script>
+</body>
+</html>

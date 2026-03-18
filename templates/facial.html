@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShantiView - Facial Analysis</title>
+    <!-- Inter font from Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .btn-gradient {
+            background-image: linear-gradient(to right, #6EE7B7, #3B82F6, #9333EA);
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .btn-gradient:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+        }
+        .video-container {
+            position: relative;
+            width: 100%;
+            max-width: 900px;
+            aspect-ratio: 16 / 9;
+            background-color: #1f2937;
+            border-radius: 1.5rem;
+            overflow: hidden;
+            border: 3px solid #6EE7B7;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+        }
+        #webcam-video {
+            display: none;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        #placeholder-img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        #analysis-status {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            color: white;
+            font-weight: bold;
+            display: none;
+        }
+        /* Styling for disabled buttons */
+        .disabled-btn {
+            background-image: none;
+            background-color: #4b5563;
+            cursor: not-allowed;
+            opacity: 0.6;
+            transform: none;
+            box-shadow: none;
+        }
+        .disabled-btn:hover {
+            transform: none;
+            box-shadow: none;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3B82F6;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-200">
+
+    <div class="min-h-screen flex flex-col items-center justify-center p-4 md:p-8">
+
+        <!-- Header -->
+        <header class="flex items-center justify-center mb-8">
+            <svg class="h-10 w-10 text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 21.5c-4.4 0-8-3.6-8-8 0-4.4 3.6-8 8-8s8 3.6 8 8c0 4.4-3.6 8-8 8z" />
+                <path d="M12 10a2 2 0 100 4 2 2 0 000-4z" />
+                <path d="M16 16l-1 1" />
+                <path d="M8 16l1 1" />
+                <path d="M16 8l1-1" />
+                <path d="M8 8l-1-1" />
+            </svg>
+            <h1 class="text-3xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 via-blue-500 to-purple-600 ml-4">
+                ShantiView
+            </h1>
+        </header>
+
+        <!-- Main Content -->
+        <main class="text-center max-w-2xl w-full">
+            <h2 class="text-2xl md:text-3xl font-semibold mb-4 text-white">
+                Facial Emotion Analysis
+            </h2>
+            <p id="instruction-message" class="text-base md:text-lg mb-8 text-gray-400 leading-relaxed">
+                Allow access to your webcam to begin the analysis. The "Proceed" button will be enabled once the analysis is complete.
+            </p>
+
+            <!-- Video Feed Section -->
+            <div class="video-container mx-auto mb-4" style="position:relative;">
+                <!-- This video element is already in the DOM, so no need to append it via JS -->
+                <video id="webcam-video" autoplay playsinline></video>
+                <img id="placeholder-img" src="https://placehold.co/900x506/1f2937/d1d5db?text=Webcam+Feed" alt="Webcam Video Placeholder">
+                <div id="analysis-status" class="text-lg"></div>
+                <!-- Progress Bar -->
+                <div class="w-full bg-gray-700 rounded-full h-2.5 mt-4">
+                    <div id="progress-bar" class="bg-teal-500 h-2.5 rounded-full transition-all duration-300 ease-in-out" style="width: 0%;"></div>
+                </div>
+            </div>
+
+            <!-- Control Buttons -->
+            <div class="flex justify-center flex-wrap gap-4">
+                <button id="start-btn" class="px-6 py-3 rounded-full text-lg font-bold text-white shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 bg-teal-500 hover:bg-teal-600">
+                    <span id="start-btn-text">Start</span>
+                    <div id="start-btn-loader" class="hidden loader"></div>
+                </button>
+                <button id="stop-btn" class="px-6 py-3 rounded-full text-lg font-bold text-white shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 bg-red-500 hover:bg-red-600 disabled-btn" disabled>
+                    Stop
+                </button>
+                <button id="proceed-btn" class="px-6 py-3 rounded-full text-lg font-bold text-white shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 btn-gradient disabled-btn" disabled>
+                    Proceed
+                </button>
+                <button id="start-over-btn" class="px-6 py-3 rounded-full text-lg font-bold text-white shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 bg-gray-600 hover:bg-gray-700 disabled-btn" disabled>
+                    Start Over
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Get references to all the important DOM elements
+        const webcamVideo = document.getElementById('webcam-video');
+        const placeholderImg = document.getElementById('placeholder-img');
+        const startBtn = document.getElementById('start-btn');
+        const stopBtn = document.getElementById('stop-btn');
+        const proceedBtn = document.getElementById('proceed-btn');
+        const startOverBtn = document.getElementById('start-over-btn');
+        const analysisStatus = document.getElementById('analysis-status');
+        const progressBar = document.getElementById('progress-bar');
+        
+        // Create an off-screen canvas for capturing frames
+        const canvas = document.createElement('canvas');
+        canvas.width = 400;
+        canvas.height = 300;
+        
+        // Global variables for managing the stream and analysis
+        let stream = null;
+        let intervalId = null;
+        let emotionCount = 0;
+        let maxEmotions = 15;
+        let lastEmotion = null;
+
+        // Function to update the status message on the screen
+        function setStatus(msg, color) {
+            analysisStatus.textContent = msg;
+            analysisStatus.style.display = 'block';
+            analysisStatus.style.color = color || 'white';
+        }
+
+        // Main function to start the webcam and begin analysis
+        async function startWebcam() {
+            try {
+                // Request access to the user's video camera
+                stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                
+                // Assign the stream to the video element and make it visible
+                webcamVideo.srcObject = stream;
+                webcamVideo.style.display = 'block';
+                placeholderImg.style.display = 'none';
+
+                // Reset and update UI state
+                emotionCount = 0;
+                lastEmotion = null;
+                progressBar.style.width = '0%';
+                proceedBtn.disabled = true; // Class is toggled by MutationObserver
+                stopBtn.disabled = false;
+                startBtn.disabled = true;
+                startOverBtn.disabled = false;
+
+                setStatus('Capturing emotions...', '#38bdf8');
+                
+                // Start capturing frames every 1 second
+                intervalId = setInterval(captureAndSendFrame, 1000);
+
+            } catch (e) {
+                // If permission is denied or an error occurs, update the status
+                console.error("Webcam access error:", e);
+                setStatus('Could not access webcam. Please allow permissions.', '#f87171');
+                startBtn.disabled = false;
+            }
+        }
+
+        // Function to stop the webcam stream
+        function stopWebcam() {
+            if (intervalId) clearInterval(intervalId);
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                webcamVideo.srcObject = null;
+            }
+            
+            // Update UI to show the placeholder again
+            webcamVideo.style.display = 'none';
+            placeholderImg.style.display = 'block';
+            
+            // Update button states
+            setStatus('Webcam stopped.', '#fbbf24');
+            stopBtn.disabled = true;
+            startBtn.disabled = false;
+            // Only enable proceed if analysis has captured at least one emotion.
+            // The 'done' state is the main trigger, but this handles manual stops.
+            if (emotionCount > 0 && emotionCount < maxEmotions) { proceedBtn.disabled = false; }
+        }
+
+        // Function to capture a frame from the video and send it for analysis
+        async function captureAndSendFrame() {
+            if (!webcamVideo.srcObject) return;
+            
+            const context = canvas.getContext('2d');
+            context.drawImage(webcamVideo, 0, 0, canvas.width, canvas.height);
+            const dataUrl = canvas.toDataURL('image/jpeg');
+
+            try {
+                const resp = await fetch('/api/analyze-frame', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: dataUrl })
+                });
+
+                if (!resp.ok) {
+                    throw new Error(`API error: ${resp.statusText}`);
+                }
+
+                const data = await resp.json();
+                lastEmotion = data.emotion;
+                emotionCount = data.count;
+
+                // Log the result of each frame analysis to the console for tracking
+                if (lastEmotion && lastEmotion !== "No face detected") {
+                    console.log(`Emotion detected: ${lastEmotion}. Total count: ${emotionCount}/${maxEmotions}`);
+                } else {
+                    console.log("No face or emotion detected in this frame. Current count remains at " + emotionCount);
+                }
+                
+                setStatus(`Captured ${emotionCount}/${maxEmotions} emotions... Last: ${lastEmotion}`, '#a78bfa');
+                
+                // Update progress bar
+                const percent = (emotionCount / maxEmotions) * 100;
+                progressBar.style.width = percent + '%';
+                
+                if (data.done) {
+                    stopWebcam();
+                    proceedBtn.disabled = false;
+                    setStatus(`Analysis complete! Captured ${emotionCount} emotions. You may proceed.`, '#10b981');
+                }
+            } catch (e) {
+                console.error("Error during frame analysis:", e);
+                setStatus('Error detecting emotion.', '#f87171');
+            }
+        }
+
+        // Reset facial emotions analysis
+        async function resetFacialEmotions() {
+            await fetch('/api/reset-emotions', { method: 'POST' });
+        }
+
+        // Event listeners for the control buttons
+        startBtn.addEventListener('click', async () => {
+            await resetFacialEmotions();
+            startWebcam();
+        });
+        stopBtn.addEventListener('click', stopWebcam);
+        startOverBtn.addEventListener('click', async () => {
+            await resetFacialEmotions();
+            window.location.reload();
+        });
+
+        // Automatically toggle the 'disabled-btn' class based on the 'disabled' attribute
+        [proceedBtn, stopBtn, startOverBtn, startBtn].forEach(btn => {
+            const observer = new MutationObserver(() => btn.classList.toggle('disabled-btn', btn.disabled));
+            observer.observe(btn, { attributes: true, attributeFilter: ['disabled'] });
+        });
+        
+        // This button would normally redirect to the next page
+        proceedBtn.addEventListener('click', () => {
+            window.location.href = "{{ url_for('voice') }}";
+        });
+    </script>
+</body>
+</html>
