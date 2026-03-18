@@ -1,6 +1,8 @@
 Flask
+gunicorn
 python-dotenv
 google-generativeai
+flask-cors
 opencv-python
 deepface
 tensorflow
@@ -12,3 +14,4 @@ kagglehub
 torch
 tf-keras
 ipykernel
+pydub
