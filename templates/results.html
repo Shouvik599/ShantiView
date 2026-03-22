@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShantiView - Your Wellness Suggestions</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Custom scrollbar styling for the suggestions sections */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            /* IE and Edge */
+            scrollbar-width: none;
+            /* Firefox */
+        }
+
+        /* Gradient for the call-to-action button */
+        .btn-gradient {
+            background-image: linear-gradient(to right, #6EE7B7, #3B82F6, #9333EA);
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .btn-gradient:hover {
+            transform: scale(1.05);
+        }
+
+        .suggestion-card {
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .suggestion-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .tab-button.active {
+            background-image: linear-gradient(to right, #6EE7B7, #3B82F6, #9333EA);
+            color: white;
+            font-weight: bold;
+        }
+
+        .emotion-tab-button.active {
+            background-image: linear-gradient(to right, #8B5CF6, #3B82F6);
+            color: white;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-900 text-gray-200 relative isolate">
+
+    <div class="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+        <div class="absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] bg-purple-600/20 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-[-20%] right-[-10%] w-[50vw] h-[50vw] bg-teal-500/20 rounded-full blur-3xl"></div>
+    </div>
+
+    <div class="min-h-screen flex flex-col items-center justify-center p-4 md:p-8 gap-12 md:gap-16">
+
+        <header class="flex items-center justify-between w-full max-w-4xl px-4">
+            <div class="flex items-center">
+                <svg class="h-10 w-10 text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 21.5c-4.4 0-8-3.6-8-8 0-4.4 3.6-8 8-8s8 3.6 8 8c0 4.4-3.6 8-8 8z" />
+                    <path d="M12 10a2 2 0 100 4 2 2 0 000-4z" />
+                    <path d="M16 16l-1 1" />
+                    <path d="M8 16l1 1" />
+                    <path d="M16 8l1-1" />
+                    <path d="M8 8l-1-1" />
+                </svg>
+                <h1
+                    class="text-3xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 via-blue-500 to-purple-600 ml-4">
+                    ShantiView
+                </h1>
+            </div>
+
+            <!-- Google Translate Widget -->
+            <div id="google_translate_element" class="text-right"></div>
+        </header>
+
+        <main class="text-center max-w-4xl w-full">
+            <h2 id="results-heading" class="text-2xl md:text-4xl font-semibold mb-4 text-white">
+                Your Personalized Wellness Journey ✨
+            </h2>
+        </main>
+
+        <div class="w-full max-w-4xl space-y-4">
+            <nav class="w-full flex justify-center">
+                <div
+                    class="flex-none sm:flex-grow flex justify-center rounded-full bg-gray-800 p-1 space-x-2 shadow-xl">
+                    <button data-emotion-tab="facial"
+                        class="emotion-tab-button active px-6 py-3 rounded-full text-sm font-semibold">
+                        <span class="mr-2">😊</span>Facial Emotion
+                    </button>
+                    <button data-emotion-tab="vocal"
+                        class="emotion-tab-button px-6 py-3 rounded-full text-sm font-semibold text-gray-400 hover:text-white transition-colors duration-200">
+                        <span class="mr-2">🗣️</span>Vocal Emotion
+                    </button>
+                </div>
+            </nav>
+
+            <div id="emotion-tab-content-container">
+                <div id="emotion-tab-facial" class="emotion-tab-content">
+                    <div id="facial-results-container" class="bg-gray-800 rounded-2xl shadow-xl p-6 md:p-8">
+                        <h3 class="text-xl font-bold text-white mb-4">Facial Emotion Analysis Results</h3>
+                        <p id="facial-results-summary" class="text-gray-400">Loading facial emotion analysis...</p>
+                        <div class="mt-4">
+                            <canvas id="emotionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div id="emotion-tab-vocal" class="emotion-tab-content hidden">
+                    <div class="bg-gray-800 rounded-2xl shadow-xl p-6 md:p-8">
+                        <h3 class="text-xl font-bold text-white mb-2">Voice Emotion Analysis Results</h3>
+                        <p id="voice-emotion-summary" class="text-gray-400">Loading voice emotion analysis...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="w-full max-w-4xl">
+            <div class="bg-gray-800 rounded-2xl shadow-xl p-6 md:p-8">
+                <h3 class="text-xl font-bold text-white mb-4">Combined Emotion & Voice Analysis Feedback 🧠</h3>
+                <p id="combined-analysis-summary" class="text-gray-300 mb-2">Loading combined analysis...</p>
+                <p id="combined-analysis-feedback" class="text-gray-400"></p>
+            </div>
+        </div>
+
+        <div id="questionnaire-results-container" class="w-full max-w-4xl bg-gray-800 rounded-2xl shadow-xl p-6 md:p-8">
+            <h3 class="text-xl font-bold text-white mb-4">Questionnaire Analysis 📝</h3>
+            <div id="questionnaire-loading-spinner" class="flex justify-center items-center py-6">
+                <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-purple-500"></div>
+            </div>
+            <div id="questionnaire-content" class="hidden">
+                <div id="questionnaire-summary-display"
+                    class="mb-6 p-4 rounded-xl bg-gray-700/50 border border-gray-700">
+                    <h4 class="text-lg font-semibold text-white mb-2">Summary</h4>
+                    <p class="text-gray-300"></p>
+                </div>
+                <div id="questionnaire-suggestions-display">
+                    <h4 class="text-lg font-semibold text-white mb-4">Suggestions</h4>
+                    <div id="suggestions-cards-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <p id="results-intro" class="text-base md:text-lg mb-8 text-gray-400 leading-relaxed text-center">
+            Here are some suggestions tailored just for you based on your location. 🌟
+        </p>
+
+        <nav class="w-full max-w-4xl flex justify-center mb-8 overflow-x-auto no-scrollbar">
+            <div class="flex-none sm:flex-grow flex justify-center rounded-full bg-gray-800 p-1 space-x-2 shadow-xl">
+                <button data-tab="Mindfulness"
+                    class="tab-button active px-6 py-3 rounded-full text-sm text-gray-400 hover:text-white transition-colors duration-200">
+                    <span class="mr-2">🧘‍♀️</span>Mindfulness
+                </button>
+                <button data-tab="Food"
+                    class="tab-button px-6 py-3 rounded-full text-sm text-gray-400 hover:text-white transition-colors duration-200">
+                    <span class="mr-2">🥗</span>Food
+                </button>
+                <button data-tab="Music"
+                    class="tab-button px-6 py-3 rounded-full text-sm text-gray-400 hover:text-white transition-colors duration-200">
+                    <span class="mr-2">🎶</span>Music
+                </button>
+                <button data-tab="Community"
+                    class="tab-button px-6 py-3 rounded-full text-sm text-gray-400 hover:text-white transition-colors duration-200">
+                    <span class="mr-2">🤝</span>Community
+                </button>
+            </div>
+        </nav>
+
+        <section id="suggestions-container" class="w-full max-w-6xl">
+            <div id="loading-spinner" class="flex justify-center items-center py-12">
+                <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-purple-500"></div>
+            </div>
+        </section>
+
+        <div class="mt-8 text-center">
+            <a href="{{ url_for('welcome') }}"
+                class="inline-block btn-gradient px-8 py-3 rounded-full text-lg font-bold text-white shadow-lg transition-transform"
+                id="start-new-session-btn">
+                Start New Session
+            </a>
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const suggestionsContainer = document.getElementById('suggestions-container');
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const questionnaireLoadingSpinner = document.getElementById('questionnaire-loading-spinner');
+            const questionnaireContent = document.getElementById('questionnaire-content');
+            const questionnaireSummaryDisplay = document.querySelector('#questionnaire-summary-display p');
+            const questionnaireSuggestionsContainer = document.getElementById('suggestions-cards-container');
+
+            // This function is required by Google's script. We initialize the translation widget here.
+            window.googleTranslateElementInit = function () {
+                new google.translate.TranslateElement({
+                    pageLanguage: 'en',
+                    layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+                    autoDisplay: true
+                }, 'google_translate_element');
+            };
+
+            // Function to fetch name and city from the backend
+            async function fetchUserDetails() {
+                try {
+                    const response = await fetch('/submit_data');
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const data = await response.json();
+                    return data;
+                } catch (error) {
+                    console.error("Failed to fetch user details:", error);
+                    return { name: null, city: null };
+                }
+            }
+
+            // Get user details
+            const userDetails = await fetchUserDetails();
+            console.log("User Details:", userDetails);
+            const name = userDetails.name;
+            const city = userDetails.city;
+
+            const resultsHeading = document.getElementById('results-heading');
+            const resultsIntro = document.getElementById('results-intro');
+            const facialResultsSummary = document.getElementById('facial-results-summary');
+
+            // Map categories to emojis for the cards
+            const emojiMap = {
+                'mindfulness': '🧘‍♀️',
+                'food': '🍎',
+                'music': '🎧',
+                'community': '🤝'
+            };
+
+            // Update the header and intro based on the name and city
+            if (name && city) {
+                resultsHeading.textContent = `Your Personalized Wellness Journey, ${name} ✨`;
+                resultsIntro.textContent = `Here are some suggestions tailored just for you, based on your location. 🌟`;
+            } else if (city) {
+                resultsHeading.textContent = `Your Personalized Wellness Journey in ${city} ✨`;
+                resultsIntro.textContent = `Here are some suggestions tailored just for you based on your location. 🌟`;
+            } else if (name) {
+                resultsHeading.textContent = `Your Personalized Wellness Journey, ${name} ✨`;
+                resultsIntro.textContent = `Here are some suggestions tailored just for you. ✨`;
+            } else {
+                resultsIntro.textContent = `Here are some suggestions tailored just for you. ✨`;
+            }
+
+            // Function to fetch facial emotion data
+            const fetchFacialEmotionData = async () => {
+                try {
+                    // Call the correct endpoint to get the list of captured emotions.
+                    const response = await fetch('/api/get-emotions');
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const analysisData = await response.json();
+                    console.log("Facial Analysis Response:", analysisData);
+                    // Return the 'emotions' array.
+                    return analysisData.emotions;
+                } catch (error) {
+                    console.error("Failed to fetch facial analysis data:", error);
+                    return null;
+                }
+            };
+
+            // Function to render facial emotion chart
+            const renderFacialEmotionChart = (emotionData) => {
+                const emotionEmojiMap = {
+                    'happy': '😊',
+                    'sad': '😢',
+                    'angry': '😠',
+                    'fear': '😨',
+                    'surprise': '😮',
+                    'neutral': '😐',
+                    'disgust': '🤢'
+                };
+                const emotionColorMap = {
+                    'happy': 'rgba(75, 192, 192, 1)',
+                    'sad': 'rgba(54, 162, 235, 1)',
+                    'angry': 'rgba(255, 99, 132, 1)',
+                    'fear': 'rgba(153, 102, 255, 1)',
+                    'surprise': 'rgba(255, 206, 86, 1)',
+                    'neutral': 'rgba(201, 203, 207, 1)',
+                    'disgust': 'rgba(139, 69, 19, 1)'
+                };
+
+                if (!emotionData || emotionData.length === 0) {
+                    facialResultsSummary.textContent = 'No facial emotion data was captured. Please try the analysis again.';
+                    return;
+                }
+
+                // Count occurrences of each emotion
+                const emotionCounts = {};
+                emotionData.forEach(data => {
+                    emotionCounts[data.emotion] = (emotionCounts[data.emotion] || 0) + 1;
+                });
+
+                if (Object.keys(emotionCounts).length === 0) {
+                    facialResultsSummary.textContent = 'No faces were detected during the analysis session.';
+                    return;
+                }
+
+                // Find the dominant emotion
+                let dominantEmotion = '';
+                let maxCount = 0;
+                for (const emotion in emotionCounts) {
+                    if (emotionCounts[emotion] > maxCount) {
+                        maxCount = emotionCounts[emotion];
+                        dominantEmotion = emotion;
+                    }
+                }
+
+                facialResultsSummary.innerHTML = `
+                    <div class="text-center bg-gray-700/50 p-4 rounded-lg mb-4">
+                        <p class="text-gray-300">Your dominant emotion was:</p>
+                        <p class="text-5xl my-2">${emotionEmojiMap[dominantEmotion] || '🤔'}</p>
+                        <p class="text-2xl font-bold text-white capitalize">${dominantEmotion}</p>
+                    </div>
+                    <p class="text-gray-400 mt-6">The chart below shows the confidence score for each emotion detected during the session.</p>
+                `;
+
+                const ctx = document.getElementById('emotionChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: emotionData.map((_, index) => `Capture ${index + 1}`),
+                        datasets: [{
+                            label: 'Emotion Confidence',
+                            data: emotionData.map(d => d.score),
+                            borderColor: 'rgba(167, 139, 250, 1)', // A nice purple
+                            backgroundColor: emotionData.map(d => emotionColorMap[d.emotion] || 'rgba(201, 203, 207, 0.5)'),
+                            pointBackgroundColor: emotionData.map(d => emotionColorMap[d.emotion] || 'rgba(201, 203, 207, 1)'),
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: emotionData.map(d => emotionColorMap[d.emotion] || 'rgba(201, 203, 207, 1)'),
+                            pointRadius: 5,
+                            pointHoverRadius: 7,
+                            tension: 0.1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                title: { display: true, text: 'Confidence Score (%)', color: '#9ca3af' },
+                                ticks: { color: '#9ca3af' },
+                                grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                            },
+                            x: {
+                                title: { display: true, text: 'Capture Sequence', color: '#9ca3af' },
+                                ticks: { color: '#9ca3af' },
+                                grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (context) {
+                                        const dataPoint = emotionData[context.dataIndex];
+                                        return `${dataPoint.emotion.charAt(0).toUpperCase() + dataPoint.emotion.slice(1)}: ${dataPoint.score.toFixed(1)}%`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            };
+
+            // Function to fetch data from the API
+            const fetchSuggestions = async (name, location) => {
+                try {
+                    const response = await fetch('/api/suggestions', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ name: name, location: location })
+                    });
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const suggestionsData = await response.json();
+                    console.log("Suggestions Response:", suggestionsData);
+                    return suggestionsData;
+                } catch (error) {
+                    console.error("Failed to fetch suggestions:", error);
+                    return null;
+                }
+            };
+
+            // Function to render the suggestions
+            const renderSuggestions = (suggestions) => {
+                suggestionsContainer.innerHTML = ''; // Clear loading message
+
+                if (!suggestions || suggestions.length === 0) {
+                    suggestionsContainer.innerHTML = `<div class="text-center py-12"><p class="text-red-400">Failed to load suggestions for this city.</p></div>`;
+                    return;
+                }
+
+                suggestions.forEach(categoryData => {
+                    const sectionId = categoryData.category.toLowerCase().replace(/\s+/g, '-');
+                    const section = document.createElement('div');
+                    section.id = `tab-${sectionId}`;
+                    section.className = 'tab-content space-y-8 p-4 md:p-8';
+                    if (sectionId !== 'mindfulness') {
+                        section.classList.add('hidden');
+                    }
+
+                    const sectionHeading = document.createElement('h3');
+                    sectionHeading.className = 'text-xl md:text-2xl font-semibold mb-6 text-center text-white';
+                    sectionHeading.textContent = `${categoryData.category} Suggestions`;
+                    section.appendChild(sectionHeading);
+
+                    const cardsWrapper = document.createElement('div');
+                    cardsWrapper.className = 'w-full flex justify-center overflow-x-auto no-scrollbar space-x-6 snap-x snap-mandatory py-2 px-1';
+
+                    categoryData.suggestions.forEach(item => {
+                        const card = document.createElement('div');
+                        card.className = 'flex-none w-11/12 sm:w-1/2 md:w-1/3 lg:w-1/4 snap-center bg-gray-800 rounded-2xl shadow-xl p-6 md:p-8 flex flex-col suggestion-card';
+                        card.innerHTML = `
+                            <span class="text-3xl mb-2">${emojiMap[sectionId] || '✨'}</span>
+                            <h4 class="text-lg font-bold text-white mb-2">${item.title}</h4>
+                            <p class="text-sm text-gray-400 flex-grow">${item.description}</p>
+                        `;
+                        cardsWrapper.appendChild(card);
+                    });
+
+                    section.appendChild(cardsWrapper);
+                    suggestionsContainer.appendChild(section);
+                });
+            };
+
+            // Function to handle tab switching
+            const handleTabClick = (event) => {
+                // Get the tab name from the data attribute
+                const tabName = event.target.dataset.tab;
+
+                // Remove active classes from all buttons and hide all tab content
+                tabButtons.forEach(button => {
+                    button.classList.remove('active');
+                });
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.add('hidden');
+                });
+
+                // Add active class to the clicked button and show its corresponding tab content
+                event.target.classList.add('active');
+                const selectedTabContent = document.getElementById(`tab-${tabName.toLowerCase().replace(/\s+/g, '-')}`);
+                if (selectedTabContent) {
+                    selectedTabContent.classList.remove('hidden');
+                }
+            };
+
+            // Function to handle tab switching for emotion analysis
+            const handleEmotionTabClick = (event) => {
+                const tabName = event.currentTarget.dataset.emotionTab;
+
+                // Remove active classes from all emotion tab buttons
+                document.querySelectorAll('.emotion-tab-button').forEach(button => {
+                    button.classList.remove('active');
+                    button.classList.add('text-gray-400', 'hover:text-white');
+                });
+
+                // Hide all emotion tab content
+                document.querySelectorAll('.emotion-tab-content').forEach(content => {
+                    content.classList.add('hidden');
+                });
+
+                // Add active class to the clicked button and show its content
+                event.currentTarget.classList.add('active');
+                event.currentTarget.classList.remove('text-gray-400', 'hover:text-white');
+                const selectedTabContent = document.getElementById(`emotion-tab-${tabName}`);
+                if (selectedTabContent) {
+                    selectedTabContent.classList.remove('hidden');
+                }
+            };
+
+            // Attach event listeners to all tab buttons
+            tabButtons.forEach(button => {
+                button.addEventListener('click', handleTabClick);
+            });
+
+            // Only fetch suggestions if city is available (required by backend)
+            if (!city) {
+                suggestionsContainer.innerHTML = `<div class="text-center py-12"><p class="text-red-400">City/location is missing. Please go back and enter your details.</p></div>`;
+            } else {
+                try {
+                    const suggestions = await fetchSuggestions(name, city);
+                    renderSuggestions(suggestions);
+                } catch (e) {
+                    console.error("Error fetching or rendering suggestions:", e);
+                    suggestionsContainer.innerHTML = `<div class="text-center py-12"><p class="text-red-400">An unexpected error occurred while loading suggestions.</p></div>`;
+                }
+            }
+
+            // Attach event listeners to emotion tab buttons
+            document.querySelectorAll('.emotion-tab-button').forEach(button => {
+                button.addEventListener('click', handleEmotionTabClick);
+            });
+
+            // Fetch and display facial emotion data (optional, can show error if fails)
+            try {
+                const facialResults = await fetchFacialEmotionData();
+                renderFacialEmotionChart(facialResults);
+            } catch (e) {
+                facialResultsSummary.textContent = 'Failed to load facial emotion analysis data.';
+            }
+
+            // Fetch and display voice emotion result
+            async function fetchVoiceEmotion() {
+                try {
+                    const response = await fetch('/api/get-voice-emotion');
+                    if (!response.ok) {
+                        throw new Error('No voice emotion result available.');
+                    }
+                    const data = await response.json();
+                    const summary = document.getElementById('voice-emotion-summary');
+                    if (data.emotion) {
+                        const formattedEmotion = data.emotion.charAt(0).toUpperCase() + data.emotion.slice(1);
+                        summary.innerHTML = `
+                            <span class="text-4xl font-bold text-blue-400">${formattedEmotion}</span>
+                            <span class="ml-2 text-gray-400">was detected as your dominant voice emotion.</span>
+                        `;
+                    } else {
+                        summary.textContent = 'No voice emotion detected.';
+                    }
+                    return data.emotion;
+                } catch (e) {
+                    const summary = document.getElementById('voice-emotion-summary');
+                    summary.textContent = 'No voice emotion detected.';
+                    return null;
+                }
+            }
+
+            // Fetch and display voice emotion
+            const vocalEmotion = await fetchVoiceEmotion();
+
+            // Fetch and display questionnaire results
+            async function fetchQuestionnaireResults() {
+                try {
+                    // Show loading spinner
+                    questionnaireLoadingSpinner.classList.remove('hidden');
+                    questionnaireContent.classList.add('hidden');
+
+                    // Fetch data from the API
+                    const response = await fetch('/api/get_question_results');
+                    if (!response.ok) {
+                        const errData = await response.json();
+                        throw new Error(errData.message || 'Failed to load questionnaire results.');
+                    }
+                    const data = await response.json();
+
+                    // Hide spinner and show content
+                    questionnaireLoadingSpinner.classList.add('hidden');
+                    questionnaireContent.classList.remove('hidden');
+
+                    if (data.status === "success" && data.analysis_and_suggestions) {
+                        const analysisData = data.analysis_and_suggestions; // Use a variable for clarity
+                        questionnaireSummaryDisplay.textContent = analysisData.summary;
+                        questionnaireSuggestionsContainer.innerHTML = ''; // Clear existing suggestions
+
+                        const suggestions = analysisData.suggestions;
+                        suggestions.forEach(suggestion => {
+                            const card = document.createElement('div');
+                            card.className = 'suggestion-card bg-gray-800 rounded-2xl shadow-xl p-6 flex items-start space-x-4';
+                            card.innerHTML = `
+                    <div class="flex-shrink-0 pt-1">
+                        <svg class="h-6 w-6 text-teal-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                    <p class="text-sm md:text-base text-gray-300">${suggestion}</p>
+                `;
+                            questionnaireSuggestionsContainer.appendChild(card);
+                        });
+
+                    } else {
+                        questionnaireSummaryDisplay.textContent = data.message || 'Failed to load analysis. Please complete the questionnaire first.';
+                        questionnaireSuggestionsContainer.innerHTML = '';
+                    }
+                } catch (e) {
+                    questionnaireLoadingSpinner.classList.add('hidden');
+                    questionnaireContent.classList.remove('hidden');
+                    questionnaireSummaryDisplay.textContent = `An unexpected error occurred: ${e.message}`;
+                    questionnaireSuggestionsContainer.innerHTML = '';
+                    console.error("Error fetching or rendering results:", e);
+                }
+            }
+
+            // Fetch and display questionnaire results
+            fetchQuestionnaireResults();
+
+            // Fetch and display combined analysis results
+            async function fetchCombinedAnalysisResults() {
+                const combinedAnalysisSummary = document.getElementById('combined-analysis-summary');
+                const combinedAnalysisFeedback = document.getElementById('combined-analysis-feedback');
+
+                try {
+                    // Fetch facial emotion data
+                    const facialEmotions = await fetchFacialEmotionData();
+                    if (!facialEmotions || facialEmotions.length === 0) {
+                        combinedAnalysisSummary.textContent = "No facial emotion data available for combined analysis.";
+                        combinedAnalysisFeedback.textContent = "";
+                        return;
+                    }
+
+                    // Fetch vocal emotion data
+                    const vocalEmotion = await fetchVoiceEmotion();
+                    if (!vocalEmotion) {
+                        combinedAnalysisSummary.textContent = "No vocal emotion data available for combined analysis.";
+                        combinedAnalysisFeedback.textContent = "";
+                        return;
+                    }
+
+                    // Perform the combined analysis API call
+                    const response = await fetch('/api/combined-analysis', {
+                        method: 'POST', // Change this from 'GET' to 'POST'
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            facial_emotions_list: facialEmotions,
+                            vocal_emotion: vocalEmotion
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+
+                    // Check for a successful status and the presence of the analysis key
+                    if (data.status === "success" && data.analysis) {
+                        // Display the summary text
+                        combinedAnalysisSummary.textContent = data.analysis.summary;
+
+                        // Handle and display the suggestions
+                        const suggestions = data.analysis.suggestions;
+                        if (suggestions && Array.isArray(suggestions) && suggestions.length > 0) {
+                            const suggestionsList = document.createElement('ul');
+                            suggestionsList.className = 'list-disc list-inside mt-4 space-y-2 text-left text-gray-300';
+                            suggestions.forEach(suggestion => {
+                                const listItem = document.createElement('li');
+                                listItem.textContent = suggestion;
+                                suggestionsList.appendChild(listItem);
+                            });
+                            combinedAnalysisFeedback.innerHTML = '';
+                            combinedAnalysisFeedback.appendChild(suggestionsList);
+                        }
+                    } else {
+                        // Handle cases where the backend returns an error or no analysis data
+                        combinedAnalysisSummary.textContent = data.message || `Failed to load combined analysis. Please try again.`;
+                        combinedAnalysisFeedback.textContent = '';
+                    }
+
+                } catch (e) {
+                    console.error("Error fetching combined analysis:", e);
+                    combinedAnalysisSummary.textContent = `Failed to load combined analysis. Please try again.`;
+                    combinedAnalysisFeedback.textContent = '';
+                }
+            }
+
+
+            // Trigger the combined analysis fetch when the page loads
+            fetchCombinedAnalysisResults();
+        });
+    </script>
+    <script type="text/javascript"
+        src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+</body>
+
+</html>

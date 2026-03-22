@@ -1,0 +1,16 @@
+setuptools
+wheel
+Flask
+gunicorn
+python-dotenv
+google-generativeai
+flask-cors
+opencv-python-headless
+numpy
+librosa
+scikit-learn
+pydub
+tensorflow
+keras
+tf-keras
+deepface
