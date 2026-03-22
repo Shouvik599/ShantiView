@@ -50,7 +50,7 @@ app.secret_key = os.getenv('FLASK_SECRET_KEY')
 # This is crucial for the frontend (your HTML file) to be able to make
 # requests to this backend, as they are on different "origins" (the local file system
 # versus the local server).
-CORS(app)
+CORS(app, supports_credentials=True)
 
 
 # Global variable for webcam access - this is okay to be global as it's a resource, not user data

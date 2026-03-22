@@ -239,7 +239,8 @@
                 const resp = await fetch('/api/analyze-frame', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ image: dataUrl })
+                    body: JSON.stringify({ image: dataUrl }),
+                    credentials: 'include'
                 });
 
                 if (!resp.ok) {
@@ -276,7 +277,7 @@
 
         // Reset facial emotions analysis
         async function resetFacialEmotions() {
-            await fetch('/api/reset-emotions', { method: 'POST' });
+            await fetch('/api/reset-emotions', { method: 'POST', credentials: 'include' });
         }
 
         // Event listeners for the control buttons
