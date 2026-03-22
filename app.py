@@ -18,7 +18,7 @@ import tensorflow as tf
 import atexit
 import joblib
 from pydub import AudioSegment
-import openai
+from openai import OpenAI
 
 # Load environment variables from .env file
 load_dotenv()
