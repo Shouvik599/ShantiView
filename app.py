@@ -204,6 +204,7 @@ def analyze_frame_api():
                 if len(emotion_results) > 15:
                     emotion_results = emotion_results[-15:]
                 session['emotion_results'] = emotion_results # Update the session
+                session.modified = True
                 
         return jsonify({
             'emotion': response_emotion,
