@@ -191,8 +191,12 @@
         <div class="mt-8 text-center">
             <a href="#"
                 class="inline-block btn-gradient px-8 py-3 rounded-full text-lg font-bold text-white shadow-lg transition-transform"
-                id="start-new-session-btn"
-                onclick="localStorage.removeItem('facialEmotionResults'); window.location.href='/';">
+                id="start-new-session-btn" onclick="localStorage.removeItem('facialEmotionResults');
+                localStorage.removeItem('mm_voice_emotion');
+                localStorage.removeItem('questionnaireResults');
+                localStorage.removeItem('userName');
+                localStorage.removeItem('userCity');
+                window.location.href='/';">
                 Start New Session
             </a>
         </div>
@@ -218,14 +222,31 @@
             };
 
             // Function to fetch name and city from the backend
+            // Function to fetch name and city — from localStorage first, then server session
             async function fetchUserDetails() {
                 try {
-                    const response = await fetch('/submit_data');
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
+                    // PRIMARY SOURCE: localStorage (works on Hugging Face Spaces)
+                    const storedName = localStorage.getItem('userName');
+                    const storedCity = localStorage.getItem('userCity');
+
+                    if (storedName || storedCity) {
+                        console.log("✅ User details loaded from localStorage:", { name: storedName, city: storedCity });
+                        return { name: storedName || null, city: storedCity || null };
                     }
-                    const data = await response.json();
-                    return data;
+
+                    // FALLBACK: Server session (works locally)
+                    console.log("⚠️ No user details in localStorage, trying server session...");
+                    const response = await fetch('/submit_data', { credentials: 'include' });
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.name || data.city) {
+                            console.log("✅ User details loaded from server session:", data);
+                            return data;
+                        }
+                    }
+
+                    console.warn("No user details found in either source.");
+                    return { name: null, city: null };
                 } catch (error) {
                     console.error("Failed to fetch user details:", error);
                     return { name: null, city: null };
@@ -545,46 +566,92 @@
 
             // Fetch and display voice emotion result
             async function fetchVoiceEmotion() {
+                const summary = document.getElementById('voice-emotion-summary');
+                let emotion = null;
+
                 try {
-                    const response = await fetch('/api/get-voice-emotion');
-                    if (!response.ok) {
-                        throw new Error('No voice emotion result available.');
+                    // PRIMARY SOURCE: Read from localStorage (works on Hugging Face Spaces)
+                    const storedEmotion = localStorage.getItem('mm_voice_emotion'); if (storedEmotion) {
+                        emotion = storedEmotion;
+                        console.log("✅ Voice emotion loaded from localStorage:", emotion);
                     }
-                    const data = await response.json();
-                    const summary = document.getElementById('voice-emotion-summary');
-                    if (data.emotion) {
-                        const formattedEmotion = data.emotion.charAt(0).toUpperCase() + data.emotion.slice(1);
+
+                    // FALLBACK: Try server session (works locally)
+                    if (!emotion) {
+                        console.log("⚠️ No voice emotion in localStorage, trying server session...");
+                        const response = await fetch('/api/get-voice-emotion', { credentials: 'include' });
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.emotion) {
+                                emotion = data.emotion;
+                                console.log("✅ Voice emotion loaded from server session:", emotion);
+                            }
+                        }
+                    }
+
+                    // Display the result
+                    if (emotion) {
+                        const formattedEmotion = emotion.charAt(0).toUpperCase() + emotion.slice(1);
                         summary.innerHTML = `
-                            <span class="text-4xl font-bold text-blue-400">${formattedEmotion}</span>
-                            <span class="ml-2 text-gray-400">was detected as your dominant voice emotion.</span>
-                        `;
+                <span class="text-4xl font-bold text-blue-400">${formattedEmotion}</span>
+                <span class="ml-2 text-gray-400">was detected as your dominant voice emotion.</span>
+            `;
+                        return emotion;
                     } else {
                         summary.textContent = 'No voice emotion detected.';
+                        return null;
                     }
-                    return data.emotion;
                 } catch (e) {
-                    const summary = document.getElementById('voice-emotion-summary');
+                    console.error("Error fetching voice emotion:", e);
                     summary.textContent = 'No voice emotion detected.';
                     return null;
                 }
-            }
-
-            // Fetch and display voice emotion
+            }            // Fetch and display voice emotion
             const vocalEmotion = await fetchVoiceEmotion();
 
             // Fetch and display questionnaire results
             async function fetchQuestionnaireResults() {
                 try {
-                    // Show loading spinner
                     questionnaireLoadingSpinner.classList.remove('hidden');
                     questionnaireContent.classList.add('hidden');
 
-                    // Fetch data from the API
-                    const response = await fetch('/api/get_question_results');
+                    // PRIMARY SOURCE: Read questionnaire data from localStorage
+                    let questionnaireData = null;
+                    const storedData = localStorage.getItem('questionnaireResults');
+
+                    if (storedData) {
+                        questionnaireData = JSON.parse(storedData);
+                        console.log("✅ Questionnaire data loaded from localStorage:", questionnaireData);
+                    } else {
+                        // FALLBACK: Try server session (works locally)
+                        console.log("⚠️ No questionnaire data in localStorage, trying server session...");
+                        const sessionResponse = await fetch('/api/get_question_results', { credentials: 'include' });
+                        if (sessionResponse.ok) {
+                            const sessionData = await sessionResponse.json();
+                            if (sessionData.status === 'success' && sessionData.data) {
+                                questionnaireData = sessionData.data;
+                                console.log("✅ Questionnaire data loaded from server session:", questionnaireData);
+                            }
+                        }
+                    }
+
+                    if (!questionnaireData) {
+                        throw new Error('No questionnaire results available. Please complete the questionnaire first.');
+                    }
+
+                    // POST the data to the NEW analysis endpoint (no session dependency)
+                    const response = await fetch('/api/analyze_questionnaire', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify(questionnaireData)
+                    });
+
                     if (!response.ok) {
                         const errData = await response.json();
-                        throw new Error(errData.message || 'Failed to load questionnaire results.');
+                        throw new Error(errData.message || 'Failed to analyze questionnaire results.');
                     }
+
                     const data = await response.json();
 
                     // Hide spinner and show content
@@ -592,9 +659,9 @@
                     questionnaireContent.classList.remove('hidden');
 
                     if (data.status === "success" && data.analysis_and_suggestions) {
-                        const analysisData = data.analysis_and_suggestions; // Use a variable for clarity
+                        const analysisData = data.analysis_and_suggestions;
                         questionnaireSummaryDisplay.textContent = analysisData.summary;
-                        questionnaireSuggestionsContainer.innerHTML = ''; // Clear existing suggestions
+                        questionnaireSuggestionsContainer.innerHTML = '';
 
                         const suggestions = analysisData.suggestions;
                         suggestions.forEach(suggestion => {
@@ -610,21 +677,18 @@
                 `;
                             questionnaireSuggestionsContainer.appendChild(card);
                         });
-
                     } else {
-                        questionnaireSummaryDisplay.textContent = data.message || 'Failed to load analysis. Please complete the questionnaire first.';
+                        questionnaireSummaryDisplay.textContent = data.message || 'Failed to load analysis.';
                         questionnaireSuggestionsContainer.innerHTML = '';
                     }
                 } catch (e) {
                     questionnaireLoadingSpinner.classList.add('hidden');
                     questionnaireContent.classList.remove('hidden');
-                    questionnaireSummaryDisplay.textContent = `An unexpected error occurred: ${e.message}`;
+                    questionnaireSummaryDisplay.textContent = e.message;
                     questionnaireSuggestionsContainer.innerHTML = '';
-                    console.error("Error fetching or rendering results:", e);
+                    console.error("Error fetching or rendering questionnaire results:", e);
                 }
-            }
-
-            // Fetch and display questionnaire results
+            }            // Fetch and display questionnaire results
             fetchQuestionnaireResults();
 
             // Fetch and display combined analysis results

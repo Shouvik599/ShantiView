@@ -352,27 +352,42 @@ def voice():
     return render_template('voice.html')
 
 # --- Questionnaire endpoints ---
-@app.route('/api/get_question_results', methods=['POST','GET'])
+@app.route('/api/get_question_results', methods=['POST', 'GET'])
 def get_question_results():
     """
-    This endpoint receives and processes the questionnaire results.
-    It stores the results in the session.
+    POST: Receives and stores questionnaire results.
+    GET: Returns raw questionnaire results (legacy, session-based).
     """
     if request.method == 'POST':
         try:
             data = request.get_json()
             if not data:
                 return jsonify({'error': 'Invalid JSON data received'}), 400
-            # Store the results in the session
+            # Store in session (works locally, may not work on HF Spaces)
             session['questionnaire_results'] = data
+            session.modified = True
             return jsonify({'message': 'Results received successfully!', 'data_received': data}), 200
         except Exception as e:
             print(f"An error occurred: {e}")
             return jsonify({'error': 'An internal server error occurred'}), 500
+    
     elif request.method == 'GET':
         questionnaire_results = session.get('questionnaire_results', None)
         if not questionnaire_results:
             return jsonify({'message': 'No questionnaire results available yet.'}), 404
+        return jsonify({'status': 'success', 'data': questionnaire_results}), 200
+
+
+@app.route('/api/analyze_questionnaire', methods=['POST'])
+def analyze_questionnaire():
+    """
+    NEW ENDPOINT: Receives questionnaire data directly in the request body
+    and returns Gemini analysis. No session dependency.
+    """
+    try:
+        questionnaire_results = request.get_json()
+        if not questionnaire_results:
+            return jsonify({'status': 'error', 'message': 'No questionnaire data provided.'}), 400
 
         prompt = f"""
         Based on the following emotional and mental well-being data from a user questionnaire, provide a direct, empathetic, and encouraging feedback response in JSON format. The JSON object should have two keys: "summary" and "suggestions". The "summary" should be a string that summarizes the user's current state based on their ratings and feelings. The "suggestions" should be an array of strings, with each string containing an actionable and personalized suggestion for improvement.
@@ -391,31 +406,33 @@ def get_question_results():
         - Manager Support: {questionnaire_results.get('managerSupport', 'N/A')}
         - Biggest Emotional Challenge at Work: {questionnaire_results.get('corporateFeedback', 'N/A')}
         """
-        try:
-            response = model.generate_content(prompt)
-            analysis_text = response.text
-            print("Results feedback: ")
-            print(analysis_text)
-            if analysis_text.strip().startswith('```json'):
-                analysis_text = analysis_text.strip()[7:-3].strip()
-            analysis_dict = json.loads(analysis_text)
-            return jsonify({
-                "status": "success",
-                "analysis_and_suggestions": analysis_dict
-            })
-        except json.JSONDecodeError as e:
-            print(f"Failed to decode JSON from LLM response: {e}")
-            return jsonify({
-                "status": "error",
-                "message": "Invalid analysis format received from LLM."
-            }), 500
-        except Exception as e:
-            print(f"An unexpected error occurred during LLM call: {e}")
-            return jsonify({
-                "status": "error",
-                "message": "An unexpected error occurred. Please try again."
-            }), 500
-
+        
+        response = model.generate_content(prompt)
+        analysis_text = response.text
+        logging.info("Questionnaire analysis response: %s", analysis_text)
+        
+        if analysis_text.strip().startswith('```json'):
+            analysis_text = analysis_text.strip()[7:-3].strip()
+        
+        analysis_dict = json.loads(analysis_text)
+        return jsonify({
+            "status": "success",
+            "analysis_and_suggestions": analysis_dict
+        })
+        
+    except json.JSONDecodeError as e:
+        logging.error(f"Failed to decode JSON from LLM response: {e}")
+        return jsonify({
+            "status": "error",
+            "message": "Invalid analysis format received from LLM."
+        }), 500
+    except Exception as e:
+        logging.error(f"An unexpected error occurred during questionnaire analysis: {e}")
+        return jsonify({
+            "status": "error",
+            "message": "An unexpected error occurred. Please try again."
+        }), 500
+        
 @app.route('/questionnaire')
 def questionnaire():
     """Renders the questionnaire page."""
