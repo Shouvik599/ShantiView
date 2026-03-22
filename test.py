@@ -1,3 +1,2 @@
-import secrets
-
-print(secrets.token_urlsafe(32))
+import shutil
+print("ffmpeg in PATH:", shutil.which("ffmpeg"))

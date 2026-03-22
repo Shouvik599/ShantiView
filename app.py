@@ -166,13 +166,10 @@ def stop_video():
 @app.route('/api/analyze-frame', methods=['POST'])
 def analyze_frame_api():
     """
-    Receives a base64 image from the frontend, analyzes it for emotion,
-    and stores the result in the session.
+    Receives a base64 image from the frontend, analyzes it for emotion.
+    This endpoint is STATELESS - it only analyzes and returns the result.
+    The client is responsible for accumulating results.
     """
-    # Use session to store emotion results
-    if 'emotion_results' not in session:
-        session['emotion_results'] = []
-    
     try:
         data = request.get_json()
         image_data = data.get('image')
@@ -188,44 +185,41 @@ def analyze_frame_api():
         # Analyze the frame
         dominant_emotion, emotion_score, _ = facial_emotion.analyze_frame(frame)
 
-        # The emotion to be sent back to the frontend for status updates
-        response_emotion = "No face detected"
+        if dominant_emotion and dominant_emotion != "Uncertain":
+            return jsonify({
+                'detected': True,
+                'emotion': str(dominant_emotion),
+                'score': float(round(emotion_score, 2))
+            })
+        elif dominant_emotion == "Uncertain":
+            return jsonify({
+                'detected': False,
+                'emotion': 'Uncertain',
+                'score': float(round(emotion_score, 2)) if emotion_score else 0
+            })
+        else:
+            return jsonify({
+                'detected': False,
+                'emotion': 'No face detected',
+                'score': 0
+            })
 
-        if dominant_emotion:
-            response_emotion = dominant_emotion
-            # Only add confident emotions to our results list
-            if dominant_emotion != "Uncertain":
-                emotion_results = session.get('emotion_results', [])
-                emotion_results.append({
-                    "emotion": str(dominant_emotion),
-                    "score": float(round(emotion_score, 2))
-                })
-                # Keep only the last 15
-                if len(emotion_results) > 15:
-                    emotion_results = emotion_results[-15:]
-                session['emotion_results'] = emotion_results # Update the session
-                session.modified = True
-                
-        return jsonify({
-            'emotion': response_emotion,
-            'count': len(session.get('emotion_results', [])),
-            'done': len(session.get('emotion_results', [])) >= 15
-        })
     except Exception as e:
         logging.error("Error in /api/analyze-frame: %s", e)
         return jsonify({'error': 'Emotion analysis failed'}), 500
 
 @app.route('/api/get-emotions', methods=['GET'])
 def get_emotions():
-    """Returns the list of captured emotions from the session."""
+    """This endpoint is no longer the source of truth. 
+    Kept for backward compatibility but client manages state now."""
     return jsonify({'emotions': session.get('emotion_results', [])})
+
 
 @app.route('/api/reset-emotions', methods=['POST'])
 def reset_emotions():
-    """Clears the stored facial emotion results from the session."""
+    """Clears any stored facial emotion results from the session."""
     session.pop('emotion_results', None)
     return jsonify({"status": "reset"})
-
 
 # --- Voice emotion detection endpoints ---
 
@@ -271,6 +265,7 @@ def predict_audio():
     """
     Endpoint to receive an audio file, make a prediction, and return the result.
     """
+    logging.info("Received request for /predict_audio")
     # Check if models are loaded
     if mlp_model is None:
         logging.error("Model not loaded during prediction request")
@@ -281,25 +276,35 @@ def predict_audio():
         return jsonify({"error": "Scaler not loaded. Check server logs."}), 500
 
     if 'audio_file' not in request.files:
+        logging.warning("No audio file in request.files")
         return jsonify({"error": "No audio file provided."}), 400
 
     audio_file = request.files['audio_file']
     if audio_file.filename == '':
+        logging.warning("Audio file has no filename")
         return jsonify({"error": "No selected file."}), 400
 
     temp_path = os.path.join(UPLOADS_DIR, "temp_audio_upload")
     wav_path = os.path.join(UPLOADS_DIR, "temp_audio.wav")
 
     try:
+        logging.info(f"Saving uploaded file to: {temp_path}")
         audio_file.save(temp_path)
+        
+        logging.info(f"Loading audio file with pydub from: {temp_path}")
         audio = AudioSegment.from_file(temp_path)
+        
+        logging.info(f"Exporting audio to WAV format at: {wav_path}")
         audio.export(wav_path, format="wav")
 
+        logging.info("Extracting features with librosa")
         mfccs = extract_features(wav_path)
 
         if mfccs is None:
+            logging.error("Feature extraction failed, mfccs is None.")
             return jsonify({"error": "Failed to extract features from the audio file."}), 500
 
+        logging.info("Scaling features and making prediction")
         scaled_mfccs = scaler.transform(mfccs.reshape(1, -1))
         predicted_emotion = mlp_model.predict(scaled_mfccs)[0]
 
@@ -307,13 +312,17 @@ def predict_audio():
         session['voice_emotion_result'] = {
             "emotion": str(predicted_emotion)
         }
-
+        session.modified = True
+        
+        logging.info(f"Prediction successful: {predicted_emotion}")
         return jsonify({"emotion": predicted_emotion})
 
     except Exception as e:
         logging.error(f"Error during audio prediction: {e}")
-        if isinstance(e, FileNotFoundError):
-             return jsonify({"error": "Failed to process audio file. Ensure FFmpeg is installed and in your system's PATH."}), 500
+        logging.error(f"Exception type: {type(e)}")
+        # Check if the exception message contains hints about ffmpeg
+        if "ffmpeg" in str(e).lower() or isinstance(e, FileNotFoundError):
+             return jsonify({"error": "Audio processing failed. Please ensure FFmpeg is installed and accessible in your system's PATH."}), 500
         return jsonify({"error": "An error occurred during audio processing."}), 500
 
     finally:
