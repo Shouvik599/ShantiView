@@ -16,7 +16,7 @@ A comprehensive mental health analysis platform that combines multiple emotion r
 - **Facial Emotion Detection**: Real-time emotion recognition from webcam feed using deep learning
 - **Voice Emotion Recognition**: Analyze emotional states from audio files using neural networks
 - **Mental Health Questionnaire**: Structured assessment of mental well-being
-- **AI-Powered Analysis**: Integrated Gemini API for personalized insights and recommendations
+NVIDIA Llama 3.3 70B for personalized insights and recommendations
 - **Wellness Dashboard**: Comprehensive view combining facial emotions, voice analysis, and questionnaire results
 - **AI Chatbot**: Interactive chatbot for wellness support and guidance
 - **Smart Recommendations**: Personalized wellness suggestions based on combined analysis
@@ -27,7 +27,7 @@ A comprehensive mental health analysis platform that combines multiple emotion r
 - **Machine Learning**: TensorFlow, Keras, scikit-learn
 - **Computer Vision**: OpenCV, DeepFace
 - **Audio Processing**: Librosa, pydub
-- **AI Integration**: Google Generative AI (Gemini)
+AI Integration**: NVIDIA NIM (Llama 3.3 70B Instruct)
 - **Frontend**: HTML, CSS, JavaScript
 - **Environment Manager**: python-dotenv
 
@@ -36,7 +36,7 @@ A comprehensive mental health analysis platform that combines multiple emotion r
 - Python 3.8+
 - Webcam (for facial emotion detection)
 - Microphone (for voice emotion detection)
-- Google Gemini API key
+- NVIDIA API key
 
 ## Installation
 
@@ -69,7 +69,7 @@ A comprehensive mental health analysis platform that combines multiple emotion r
 5. **Set up environment variables**
    Create a `.env` file in the project root:
    ```
-   GOOGLE_API_KEY=your_gemini_api_key_here
+  NVIDIA_API_KEY=your_nvidia_api_key_here
    FLASK_SECRET_KEY=your_secret_key_here
    FLASK_ENV=development
    ```
@@ -153,7 +153,7 @@ ShantiView/
 ## Configuration
 
 ### Environment Variables
-- `GOOGLE_API_KEY`: Your Google Gemini API key
+- `NVIDIA_API_KEY`: Your NVIDIA API key
 - `FLASK_SECRET_KEY`: Secret key for Flask session management
 
 ### Audio Settings
@@ -204,7 +204,7 @@ For issues and questions, please open an issue on the repository or contact the 
 
 ## Acknowledgments
 
-- Google Generative AI (Gemini) for AI capabilities
+- NVIDIA Llama 3.3 70B for AI capabilities
 - DeepFace for facial recognition
 - OpenCV for computer vision
 - Librosa for audio processing
