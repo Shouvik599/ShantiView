@@ -1,3 +1,12 @@
+---
+title: ShantiView
+emoji: 🧘
+colorFrom: blue
+colorTo: gray
+sdk: docker
+app_port: 7860
+pinned: false
+---
 # ShantiView
 
 A comprehensive mental health analysis platform that combines multiple emotion recognition techniques with AI-powered insights and personalized wellness recommendations.
