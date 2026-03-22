@@ -189,9 +189,10 @@
         </section>
 
         <div class="mt-8 text-center">
-            <a href="{{ url_for('welcome') }}"
+            <a href="#"
                 class="inline-block btn-gradient px-8 py-3 rounded-full text-lg font-bold text-white shadow-lg transition-transform"
-                id="start-new-session-btn">
+                id="start-new-session-btn"
+                onclick="localStorage.removeItem('facialEmotionResults'); window.location.href='/';">
                 Start New Session
             </a>
         </div>
@@ -263,18 +264,32 @@
                 resultsIntro.textContent = `Here are some suggestions tailored just for you. ✨`;
             }
 
-            // Function to fetch facial emotion data
+            // Function to fetch facial emotion data from localStorage (client-side state)
             const fetchFacialEmotionData = async () => {
                 try {
-                    // Call the correct endpoint to get the list of captured emotions.
-                    const response = await fetch('/api/get-emotions');
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
+                    // PRIMARY SOURCE: Read from localStorage (works on Hugging Face Spaces)
+                    const storedData = localStorage.getItem('facialEmotionResults');
+                    if (storedData) {
+                        const emotions = JSON.parse(storedData);
+                        if (emotions && emotions.length > 0) {
+                            console.log("✅ Facial emotions loaded from localStorage:", emotions);
+                            return emotions;
+                        }
                     }
-                    const analysisData = await response.json();
-                    console.log("Facial Analysis Response:", analysisData);
-                    // Return the 'emotions' array.
-                    return analysisData.emotions;
+
+                    // FALLBACK: Try the server session endpoint (works locally)
+                    console.log("⚠️ No facial data in localStorage, trying server session...");
+                    const response = await fetch('/api/get-emotions', { credentials: 'include' });
+                    if (response.ok) {
+                        const analysisData = await response.json();
+                        if (analysisData.emotions && analysisData.emotions.length > 0) {
+                            console.log("✅ Facial emotions loaded from server session:", analysisData.emotions);
+                            return analysisData.emotions;
+                        }
+                    }
+
+                    console.warn("⚠️ No facial emotion data found in either source.");
+                    return null;
                 } catch (error) {
                     console.error("Failed to fetch facial analysis data:", error);
                     return null;
@@ -618,13 +633,14 @@
                 const combinedAnalysisFeedback = document.getElementById('combined-analysis-feedback');
 
                 try {
-                    // Fetch facial emotion data
+                    // Fetch facial emotion data (now reads from localStorage first)
                     const facialEmotions = await fetchFacialEmotionData();
                     if (!facialEmotions || facialEmotions.length === 0) {
                         combinedAnalysisSummary.textContent = "No facial emotion data available for combined analysis.";
                         combinedAnalysisFeedback.textContent = "";
                         return;
                     }
+                    console.log("📊 Combined analysis using facial emotions:", facialEmotions);
 
                     // Fetch vocal emotion data
                     const vocalEmotion = await fetchVoiceEmotion();
@@ -633,19 +649,20 @@
                         combinedAnalysisFeedback.textContent = "";
                         return;
                     }
+                    console.log("📊 Combined analysis using vocal emotion:", vocalEmotion);
 
                     // Perform the combined analysis API call
                     const response = await fetch('/api/combined-analysis', {
-                        method: 'POST', // Change this from 'GET' to 'POST'
+                        method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                         },
+                        credentials: 'include',
                         body: JSON.stringify({
                             facial_emotions_list: facialEmotions,
                             vocal_emotion: vocalEmotion
                         })
                     });
-
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }

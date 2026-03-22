@@ -174,7 +174,7 @@ def analyze_frame_api():
         data = request.get_json()
         image_data = data.get('image')
         if not image_data:
-            return jsonify({'error': 'No image provided'}), 400
+            return jsonify({'detected': False, 'emotion': 'No image provided', 'score': 0}), 400
 
         # Remove header "data:image/jpeg;base64,"
         header, encoded = image_data.split(",", 1)
@@ -185,29 +185,34 @@ def analyze_frame_api():
         # Analyze the frame
         dominant_emotion, emotion_score, _ = facial_emotion.analyze_frame(frame)
 
-        if dominant_emotion and dominant_emotion != "Uncertain":
-            return jsonify({
-                'detected': True,
-                'emotion': str(dominant_emotion),
-                'score': float(round(emotion_score, 2))
-            })
-        elif dominant_emotion == "Uncertain":
-            return jsonify({
-                'detected': False,
-                'emotion': 'Uncertain',
-                'score': float(round(emotion_score, 2)) if emotion_score else 0
-            })
-        else:
+        # Build response based on what was detected
+        if dominant_emotion is None:
+            # No face detected at all
             return jsonify({
                 'detected': False,
                 'emotion': 'No face detected',
                 'score': 0
             })
+        
+        if dominant_emotion == "Uncertain":
+            # Face detected but below confidence threshold
+            return jsonify({
+                'detected': False,
+                'emotion': 'Uncertain',
+                'score': round(float(emotion_score), 2) if emotion_score else 0
+            })
+        
+        # Confident emotion detected
+        return jsonify({
+            'detected': True,
+            'emotion': str(dominant_emotion),
+            'score': round(float(emotion_score), 2)
+        })
 
     except Exception as e:
         logging.error("Error in /api/analyze-frame: %s", e)
-        return jsonify({'error': 'Emotion analysis failed'}), 500
-
+        return jsonify({'detected': False, 'emotion': 'Error', 'score': 0}), 500
+    
 @app.route('/api/get-emotions', methods=['GET'])
 def get_emotions():
     """This endpoint is no longer the source of truth. 
@@ -745,5 +750,5 @@ if __name__ == '__main__':
     # Start the Flask server
     # For production (Render), disable debug and use dynamic port
     port = int(os.environ.get('PORT', 7860))
-    debug_mode = os.environ.get('FLASK_ENV') == 'development'
+    debug_mode = os.environ.get('FLASK_ENV') == 'development' 
     app.run(debug=debug_mode, host="0.0.0.0", port=port)

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,15 +15,18 @@
         body {
             font-family: 'Inter', sans-serif;
         }
+
         .btn-gradient {
             background-image: linear-gradient(to right, #6EE7B7, #3B82F6, #9333EA);
             transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
+
         .btn-gradient:hover {
             transform: scale(1.05);
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
         }
+
         .video-container {
             position: relative;
             width: 100%;
@@ -34,18 +38,21 @@
             border: 3px solid #6EE7B7;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
         }
+
         #webcam-video {
             display: none;
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
+
         #placeholder-img {
             display: block;
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
+
         #analysis-status {
             position: absolute;
             top: 1rem;
@@ -57,6 +64,7 @@
             font-weight: bold;
             display: none;
         }
+
         /* Styling for disabled buttons */
         .disabled-btn {
             background-image: none;
@@ -66,10 +74,12 @@
             transform: none;
             box-shadow: none;
         }
+
         .disabled-btn:hover {
             transform: none;
             box-shadow: none;
         }
+
         .loader {
             border: 4px solid #f3f3f3;
             border-top: 4px solid #3B82F6;
@@ -78,19 +88,27 @@
             height: 24px;
             animation: spin 1s linear infinite;
         }
+
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
     </style>
 </head>
+
 <body class="bg-gray-900 text-gray-200">
 
     <div class="min-h-screen flex flex-col items-center justify-center p-4 md:p-8">
 
         <!-- Header -->
         <header class="flex items-center justify-center mb-8">
-            <svg class="h-10 w-10 text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg class="h-10 w-10 text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 21.5c-4.4 0-8-3.6-8-8 0-4.4 3.6-8 8-8s8 3.6 8 8c0 4.4-3.6 8-8 8z" />
                 <path d="M12 10a2 2 0 100 4 2 2 0 000-4z" />
                 <path d="M16 16l-1 1" />
@@ -98,7 +116,8 @@
                 <path d="M16 8l1-1" />
                 <path d="M8 8l-1-1" />
             </svg>
-            <h1 class="text-3xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 via-blue-500 to-purple-600 ml-4">
+            <h1
+                class="text-3xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 via-blue-500 to-purple-600 ml-4">
                 ShantiView
             </h1>
         </header>
@@ -109,34 +128,45 @@
                 Facial Emotion Analysis
             </h2>
             <p id="instruction-message" class="text-base md:text-lg mb-8 text-gray-400 leading-relaxed">
-                Allow access to your webcam to begin the analysis. The "Proceed" button will be enabled once the analysis is complete.
+                Allow access to your webcam to begin the analysis. The "Proceed" button will be enabled once the
+                analysis is complete.
             </p>
 
             <!-- Video Feed Section -->
             <div class="video-container mx-auto mb-4" style="position:relative;">
                 <!-- This video element is already in the DOM, so no need to append it via JS -->
                 <video id="webcam-video" autoplay playsinline></video>
-                <img id="placeholder-img" src="https://placehold.co/900x506/1f2937/d1d5db?text=Webcam+Feed" alt="Webcam Video Placeholder">
+                <img id="placeholder-img" src="https://placehold.co/900x506/1f2937/d1d5db?text=Webcam+Feed"
+                    alt="Webcam Video Placeholder">
                 <div id="analysis-status" class="text-lg"></div>
                 <!-- Progress Bar -->
                 <div class="w-full bg-gray-700 rounded-full h-2.5 mt-4">
-                    <div id="progress-bar" class="bg-teal-500 h-2.5 rounded-full transition-all duration-300 ease-in-out" style="width: 0%;"></div>
+                    <div id="progress-bar"
+                        class="bg-teal-500 h-2.5 rounded-full transition-all duration-300 ease-in-out"
+                        style="width: 0%;"></div>
                 </div>
             </div>
 
             <!-- Control Buttons -->
             <div class="flex justify-center flex-wrap gap-4">
-                <button id="start-btn" class="px-6 py-3 rounded-full text-lg font-bold text-white shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 bg-teal-500 hover:bg-teal-600">
+                <button id="start-btn"
+                    class="px-6 py-3 rounded-full text-lg font-bold text-white shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 bg-teal-500 hover:bg-teal-600">
                     <span id="start-btn-text">Start</span>
                     <div id="start-btn-loader" class="hidden loader"></div>
                 </button>
-                <button id="stop-btn" class="px-6 py-3 rounded-full text-lg font-bold text-white shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 bg-red-500 hover:bg-red-600 disabled-btn" disabled>
+                <button id="stop-btn"
+                    class="px-6 py-3 rounded-full text-lg font-bold text-white shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 bg-red-500 hover:bg-red-600 disabled-btn"
+                    disabled>
                     Stop
                 </button>
-                <button id="proceed-btn" class="px-6 py-3 rounded-full text-lg font-bold text-white shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 btn-gradient disabled-btn" disabled>
+                <button id="proceed-btn"
+                    class="px-6 py-3 rounded-full text-lg font-bold text-white shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 btn-gradient disabled-btn"
+                    disabled>
                     Proceed
                 </button>
-                <button id="start-over-btn" class="px-6 py-3 rounded-full text-lg font-bold text-white shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 bg-gray-600 hover:bg-gray-700 disabled-btn" disabled>
+                <button id="start-over-btn"
+                    class="px-6 py-3 rounded-full text-lg font-bold text-white shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 bg-gray-600 hover:bg-gray-700 disabled-btn"
+                    disabled>
                     Start Over
                 </button>
             </div>
@@ -144,211 +174,218 @@
     </div>
 
     <script>
-    // Get references to all the important DOM elements
-    const webcamVideo = document.getElementById('webcam-video');
-    const placeholderImg = document.getElementById('placeholder-img');
-    const startBtn = document.getElementById('start-btn');
-    const stopBtn = document.getElementById('stop-btn');
-    const proceedBtn = document.getElementById('proceed-btn');
-    const startOverBtn = document.getElementById('start-over-btn');
-    const analysisStatus = document.getElementById('analysis-status');
-    const progressBar = document.getElementById('progress-bar');
+        // Get references to all the important DOM elements
+        const webcamVideo = document.getElementById('webcam-video');
+        const placeholderImg = document.getElementById('placeholder-img');
+        const startBtn = document.getElementById('start-btn');
+        const stopBtn = document.getElementById('stop-btn');
+        const proceedBtn = document.getElementById('proceed-btn');
+        const startOverBtn = document.getElementById('start-over-btn');
+        const analysisStatus = document.getElementById('analysis-status');
+        const progressBar = document.getElementById('progress-bar');
 
-    // Create an off-screen canvas for capturing frames
-    const canvas = document.createElement('canvas');
-    canvas.width = 400;
-    canvas.height = 300;
+        // Create an off-screen canvas for capturing frames
+        const canvas = document.createElement('canvas');
+        canvas.width = 400;
+        canvas.height = 300;
 
-    // --- CLIENT-SIDE STATE ---
-    // This is the key fix: emotions are stored HERE, not on the server session.
-    let stream = null;
-    let intervalId = null;
-    let emotionResults = [];  // Array to store captured emotion objects
-    let maxEmotions = 15;
-    let lastEmotion = null;
-    let isAnalyzing = false;  // Prevent overlapping requests
+        // --- CLIENT-SIDE STATE ---
+        // This is the key fix: emotions are stored HERE, not on the server session.
+        let stream = null;
+        let intervalId = null;
+        let emotionResults = [];  // Array to store captured emotion objects
+        let maxEmotions = 15;
+        let lastEmotion = null;
+        let isAnalyzing = false;  // Prevent overlapping requests
 
-    // Function to update the status message on the screen
-    function setStatus(msg, color) {
-        analysisStatus.textContent = msg;
-        analysisStatus.style.display = 'block';
-        analysisStatus.style.color = color || 'white';
-    }
-
-    // Main function to start the webcam and begin analysis
-    async function startWebcam() {
-        try {
-            // Request access to the user's video camera
-            stream = await navigator.mediaDevices.getUserMedia({ video: true });
-
-            // Assign the stream to the video element and make it visible
-            webcamVideo.srcObject = stream;
-            webcamVideo.style.display = 'block';
-            placeholderImg.style.display = 'none';
-
-            // Reset client-side state
-            emotionResults = [];
-            lastEmotion = null;
-            isAnalyzing = false;
-            progressBar.style.width = '0%';
-            proceedBtn.disabled = true;
-            stopBtn.disabled = false;
-            startBtn.disabled = true;
-            startOverBtn.disabled = false;
-
-            setStatus('Capturing emotions...', '#38bdf8');
-
-            // Start capturing frames every 1.5 seconds (slightly slower to avoid overlap)
-            intervalId = setInterval(captureAndSendFrame, 1500);
-
-        } catch (e) {
-            console.error("Webcam access error:", e);
-            setStatus('Could not access webcam. Please allow permissions.', '#f87171');
-            startBtn.disabled = false;
-        }
-    }
-
-    // Function to stop the webcam stream
-    function stopWebcam() {
-        if (intervalId) {
-            clearInterval(intervalId);
-            intervalId = null;
-        }
-        if (stream) {
-            stream.getTracks().forEach(track => track.stop());
-            webcamVideo.srcObject = null;
-            stream = null;
+        // Function to update the status message on the screen
+        function setStatus(msg, color) {
+            analysisStatus.textContent = msg;
+            analysisStatus.style.display = 'block';
+            analysisStatus.style.color = color || 'white';
         }
 
-        // Update UI to show the placeholder again
-        webcamVideo.style.display = 'none';
-        placeholderImg.style.display = 'block';
+        // Main function to start the webcam and begin analysis
+        async function startWebcam() {
+            try {
+                // Request access to the user's video camera
+                stream = await navigator.mediaDevices.getUserMedia({ video: true });
 
-        // Update button states
-        setStatus('Webcam stopped.', '#fbbf24');
-        stopBtn.disabled = true;
-        startBtn.disabled = false;
+                // Assign the stream to the video element and make it visible
+                webcamVideo.srcObject = stream;
+                webcamVideo.style.display = 'block';
+                placeholderImg.style.display = 'none';
 
-        // Enable proceed if we captured at least one emotion
-        if (emotionResults.length > 0) {
-            proceedBtn.disabled = false;
+                // Reset client-side state
+                emotionResults = [];
+                lastEmotion = null;
+                isAnalyzing = false;
+                progressBar.style.width = '0%';
+                proceedBtn.disabled = true;
+                stopBtn.disabled = false;
+                startBtn.disabled = true;
+                startOverBtn.disabled = false;
+
+                setStatus('Capturing emotions...', '#38bdf8');
+
+                // Start capturing frames every 1.5 seconds (slightly slower to avoid overlap)
+                intervalId = setInterval(captureAndSendFrame, 1500);
+
+            } catch (e) {
+                console.error("Webcam access error:", e);
+                setStatus('Could not access webcam. Please allow permissions.', '#f87171');
+                startBtn.disabled = false;
+            }
         }
-    }
 
-    // Function to capture a frame from the video and send it for analysis
-    async function captureAndSendFrame() {
-        // Guard: prevent overlapping requests
-        if (isAnalyzing) {
-            console.log("Skipping frame - previous analysis still in progress");
-            return;
-        }
-        if (!webcamVideo.srcObject) return;
-        // Check if already done
-        if (emotionResults.length >= maxEmotions) return;
-
-        isAnalyzing = true;
-
-        const context = canvas.getContext('2d');
-        context.drawImage(webcamVideo, 0, 0, canvas.width, canvas.height);
-        const dataUrl = canvas.toDataURL('image/jpeg');
-
-        try {
-            const resp = await fetch('/api/analyze-frame', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ image: dataUrl }),
-                credentials: 'include'
-            });
-
-            if (!resp.ok) {
-                throw new Error(`API error: ${resp.statusText}`);
+        // Function to stop the webcam stream
+        function stopWebcam() {
+            if (intervalId) {
+                clearInterval(intervalId);
+                intervalId = null;
+            }
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                webcamVideo.srcObject = null;
+                stream = null;
             }
 
-            const data = await resp.json();
-            lastEmotion = data.emotion;
+            // Update UI to show the placeholder again
+            webcamVideo.style.display = 'none';
+            placeholderImg.style.display = 'block';
 
-            // --- KEY CHANGE: Accumulate results on the CLIENT ---
-            if (data.detected && data.emotion && data.emotion !== "Uncertain" && data.emotion !== "No face detected") {
-                emotionResults.push({
-                    emotion: data.emotion,
-                    score: data.score
+            // Update button states
+            setStatus('Webcam stopped.', '#fbbf24');
+            stopBtn.disabled = true;
+            startBtn.disabled = false;
+
+            // Enable proceed if we captured at least one emotion
+            if (emotionResults.length > 0) {
+                proceedBtn.disabled = false;
+            }
+        }
+
+        // Function to capture a frame from the video and send it for analysis
+        // Function to capture a frame from the video and send it for analysis
+        async function captureAndSendFrame() {
+            // Guard: prevent overlapping requests
+            if (isAnalyzing) {
+                console.log("Skipping frame - previous analysis still in progress");
+                return;
+            }
+            if (!webcamVideo.srcObject) return;
+            // Check if already done
+            if (emotionResults.length >= maxEmotions) return;
+
+            isAnalyzing = true;
+
+            const context = canvas.getContext('2d');
+            context.drawImage(webcamVideo, 0, 0, canvas.width, canvas.height);
+            const dataUrl = canvas.toDataURL('image/jpeg');
+
+            try {
+                const resp = await fetch('/api/analyze-frame', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: dataUrl }),
+                    credentials: 'include'
                 });
 
-                // Keep only the last maxEmotions
-                if (emotionResults.length > maxEmotions) {
-                    emotionResults = emotionResults.slice(-maxEmotions);
+                if (!resp.ok) {
+                    throw new Error(`API error: ${resp.statusText}`);
                 }
 
-                console.log(`✅ Emotion captured: ${data.emotion} (${data.score}). Total: ${emotionResults.length}/${maxEmotions}`);
-            } else {
-                console.log(`⏭️ Skipped: ${lastEmotion}. Count remains: ${emotionResults.length}/${maxEmotions}`);
+                const data = await resp.json();
+
+                // Debug: log the full response to see exactly what the server returns
+                console.log("Server response:", JSON.stringify(data));
+
+                lastEmotion = data.emotion || 'Unknown';
+
+                // Check if a confident emotion was detected
+                // Use explicit boolean check: data.detected === true
+                if (data.detected === true) {
+                    emotionResults.push({
+                        emotion: data.emotion,
+                        score: data.score
+                    });
+
+                    // Keep only the last maxEmotions
+                    if (emotionResults.length > maxEmotions) {
+                        emotionResults = emotionResults.slice(-maxEmotions);
+                    }
+
+                    console.log(`✅ Emotion captured: ${data.emotion} (${data.score}). Total: ${emotionResults.length}/${maxEmotions}`);
+                } else {
+                    console.log(`⏭️ Not counted: ${lastEmotion} (detected=${data.detected}). Count: ${emotionResults.length}/${maxEmotions}`);
+                }
+
+                // Update UI
+                setStatus(`Captured ${emotionResults.length}/${maxEmotions} emotions... Last: ${lastEmotion}`, '#a78bfa');
+
+                // Update progress bar
+                const percent = (emotionResults.length / maxEmotions) * 100;
+                progressBar.style.width = percent + '%';
+
+                // Check if analysis is complete
+                if (emotionResults.length >= maxEmotions) {
+                    stopWebcam();
+                    proceedBtn.disabled = false;
+                    setStatus(`Analysis complete! Captured ${emotionResults.length} emotions. You may proceed.`, '#10b981');
+
+                    // Store results in localStorage for the next page to use
+                    localStorage.setItem('facialEmotionResults', JSON.stringify(emotionResults));
+                    console.log("📦 Emotion results saved to localStorage:", emotionResults);
+                }
+            } catch (e) {
+                console.error("Error during frame analysis:", e);
+                setStatus('Error detecting emotion. Retrying...', '#f87171');
+            } finally {
+                isAnalyzing = false;
             }
+        }
 
-            // Update UI
-            setStatus(`Captured ${emotionResults.length}/${maxEmotions} emotions... Last: ${lastEmotion}`, '#a78bfa');
-
-            // Update progress bar
-            const percent = (emotionResults.length / maxEmotions) * 100;
-            progressBar.style.width = percent + '%';
-
-            // Check if analysis is complete
-            if (emotionResults.length >= maxEmotions) {
-                stopWebcam();
-                proceedBtn.disabled = false;
-                setStatus(`Analysis complete! Captured ${emotionResults.length} emotions. You may proceed.`, '#10b981');
-
-                // Store results in localStorage for the next page to use
-                localStorage.setItem('facialEmotionResults', JSON.stringify(emotionResults));
-                console.log("📦 Emotion results saved to localStorage:", emotionResults);
+        // Reset facial emotions analysis (client-side + server-side cleanup)
+        async function resetFacialEmotions() {
+            emotionResults = [];
+            localStorage.removeItem('facialEmotionResults');
+            try {
+                await fetch('/api/reset-emotions', { method: 'POST', credentials: 'include' });
+            } catch (e) {
+                console.log("Server reset call failed (non-critical):", e);
             }
-        } catch (e) {
-            console.error("Error during frame analysis:", e);
-            setStatus('Error detecting emotion. Retrying...', '#f87171');
-        } finally {
-            isAnalyzing = false;
         }
-    }
 
-    // Reset facial emotions analysis (client-side + server-side cleanup)
-    async function resetFacialEmotions() {
-        emotionResults = [];
-        localStorage.removeItem('facialEmotionResults');
-        try {
-            await fetch('/api/reset-emotions', { method: 'POST', credentials: 'include' });
-        } catch (e) {
-            console.log("Server reset call failed (non-critical):", e);
-        }
-    }
+        // Event listeners for the control buttons
+        startBtn.addEventListener('click', async () => {
+            await resetFacialEmotions();
+            startWebcam();
+        });
+        stopBtn.addEventListener('click', stopWebcam);
+        startOverBtn.addEventListener('click', async () => {
+            stopWebcam();
+            await resetFacialEmotions();
+            // Reset UI
+            progressBar.style.width = '0%';
+            proceedBtn.disabled = true;
+            setStatus('', 'white');
+            analysisStatus.style.display = 'none';
+        });
 
-    // Event listeners for the control buttons
-    startBtn.addEventListener('click', async () => {
-        await resetFacialEmotions();
-        startWebcam();
-    });
-    stopBtn.addEventListener('click', stopWebcam);
-    startOverBtn.addEventListener('click', async () => {
-        stopWebcam();
-        await resetFacialEmotions();
-        // Reset UI
-        progressBar.style.width = '0%';
-        proceedBtn.disabled = true;
-        setStatus('', 'white');
-        analysisStatus.style.display = 'none';
-    });
+        // Automatically toggle the 'disabled-btn' class based on the 'disabled' attribute
+        [proceedBtn, stopBtn, startOverBtn, startBtn].forEach(btn => {
+            const observer = new MutationObserver(() => btn.classList.toggle('disabled-btn', btn.disabled));
+            observer.observe(btn, { attributes: true, attributeFilter: ['disabled'] });
+        });
 
-    // Automatically toggle the 'disabled-btn' class based on the 'disabled' attribute
-    [proceedBtn, stopBtn, startOverBtn, startBtn].forEach(btn => {
-        const observer = new MutationObserver(() => btn.classList.toggle('disabled-btn', btn.disabled));
-        observer.observe(btn, { attributes: true, attributeFilter: ['disabled'] });
-    });
-
-    // Proceed button - save to localStorage before navigating
-    proceedBtn.addEventListener('click', () => {
-        // Ensure latest results are saved
-        localStorage.setItem('facialEmotionResults', JSON.stringify(emotionResults));
-        console.log("📦 Navigating to /voice with emotions:", emotionResults);
-        window.location.href = "/voice";
-    });
-</script>
+        // Proceed button - save to localStorage before navigating
+        proceedBtn.addEventListener('click', () => {
+            // Ensure latest results are saved
+            localStorage.setItem('facialEmotionResults', JSON.stringify(emotionResults));
+            console.log("📦 Navigating to /voice with emotions:", emotionResults);
+            window.location.href = "/voice";
+        });
+    </script>
 </body>
+
 </html>
