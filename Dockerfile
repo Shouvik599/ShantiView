@@ -27,7 +27,9 @@ RUN pip install uv && uv sync --frozen-lockfile --no-dev
 # Copy backend code
 COPY backend/ .
 COPY models/ ./models/
-COPY uploads/ ./uploads/
+
+# Create uploads directory if it doesn't exist
+RUN mkdir -p ./uploads
 
 # Copy frontend build
 COPY --from=frontend-build /app/frontend/dist ./static
