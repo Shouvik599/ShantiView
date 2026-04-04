@@ -33,26 +33,15 @@ app = FastAPI(
 # ============================================================
 
 # Setup CORS for React frontend (local development and Hugging Face Space)
-# Dynamic CORS origin matching for Hugging Face Spaces
-def allow_origin_regex(origin):
-    # Allow localhost origins for local development
-    if re.match(r'^https?://localhost:\d+$', origin) or \
-       re.match(r'^https?://127\.0\.0\.1:\d+$', origin) or \
-       origin == "http://localhost:3000" or \
-       origin == "http://localhost:5173" or \
-       origin == "http://127.0.0.1:3000":
-        return True
-    # Allow Hugging Face Spaces
-    if re.match(r'^https://.*\.hf\.space$', origin):
-        return True
-    # Allow Hugging Face Spaces preview URLs
-    if re.match(r'^https://.*--.*\.hf\.space$', origin):
-        return True
-    return False
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex=allow_origin_regex,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173",
+    ],
+    allow_origin_regex=r"https://.*\.hf\.space$",  # Match Hugging Face Spaces URLs
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

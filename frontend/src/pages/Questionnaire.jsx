@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { API_URL } from '../config'
@@ -22,6 +22,72 @@ function Questionnaire() {
   })
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
+  const userCity = localStorage.getItem('userCity') || ''
+
+  const userName = localStorage.getItem('userName') || 'User'
+
+  // Pre-fetch combined analysis and region suggestions in parallel
+  useEffect(() => {
+    const facialEmotions = JSON.parse(localStorage.getItem('facialEmotions') || '[]')
+    const voiceEmotion = JSON.parse(localStorage.getItem('voiceEmotion') || 'null')
+
+    // Fetch combined analysis if we have facial/voice data
+    if (facialEmotions.length > 0 || voiceEmotion) {
+      fetchCombinedAnalysisInParallel(facialEmotions, voiceEmotion)
+    }
+
+    // Fetch region suggestions if we have a city
+    if (userCity) {
+      fetchRegionSuggestionsInParallel()
+    }
+  }, [])
+
+  // Pre-fetch combined analysis in parallel
+  const fetchCombinedAnalysisInParallel = async (facialEmotions, voiceEmotion) => {
+    const emotionsList = Array.isArray(facialEmotions) ? facialEmotions : []
+    const vocalEmotion = (typeof voiceEmotion === 'string' && voiceEmotion) 
+      ? { emotion: voiceEmotion } 
+      : {}
+    
+    try {
+      const response = await fetch(`${API_URL}/api/combined-analysis`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          facial_emotions_list: emotionsList,
+          vocal_emotion: vocalEmotion,
+          user_name: userName
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.analysis) {
+          localStorage.setItem('combinedAnalysis', JSON.stringify(data.analysis))
+        }
+      }
+    } catch (err) {
+      console.error('Error pre-fetching combined analysis:', err)
+    }
+  }
+
+  const fetchRegionSuggestionsInParallel = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/suggestions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ location: userCity })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        // Cache in localStorage so Results page can use it immediately
+        localStorage.setItem('regionSuggestions', JSON.stringify(data))
+      }
+    } catch (err) {
+      console.error('Error pre-fetching region suggestions:', err)
+    }
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -36,19 +102,65 @@ function Questionnaire() {
     setIsLoading(true)
     setError(null)
 
-    try {
-      const response = await fetch(`${API_URL}/api/analyze_questionnaire`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      })
+    const facialEmotions = JSON.parse(localStorage.getItem('facialEmotions') || '[]')
+    const voiceEmotion = JSON.parse(localStorage.getItem('voiceEmotion') || 'null')
 
-      if (response.ok) {
-        const data = await response.json()
-        localStorage.setItem('questionnaireResults', JSON.stringify(data))
-        navigate('/results', { state: { questionnaireAnalysis: data } })
+    try {
+      // Fetch ALL three analyses in parallel: questionnaire, combined analysis, and suggestions
+      const promises = [
+        fetch(`${API_URL}/api/analyze_questionnaire`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+        }),
+        // Combined analysis (if we have data)
+        (facialEmotions.length > 0 || voiceEmotion) 
+          ? fetch(`${API_URL}/api/combined-analysis`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                facial_emotions_list: facialEmotions,
+                vocal_emotion: (typeof voiceEmotion === 'string' && voiceEmotion) 
+                  ? { emotion: voiceEmotion } 
+                  : {},
+                user_name: userName
+              })
+            })
+          : null,
+        // Region suggestions
+        userCity 
+          ? fetch(`${API_URL}/api/suggestions`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ location: userCity })
+            })
+          : null
+      ].filter(Boolean) // Remove null entries
+
+      const results = await Promise.allSettled(promises)
+
+      // Process questionnaire result (always first)
+      if (results[0]?.status === 'fulfilled' && results[0].value.ok) {
+        const questionnaireData = await results[0].value.json()
+        localStorage.setItem('questionnaireResults', JSON.stringify(questionnaireData))
+        
+        // Process combined analysis result (second if present)
+        if (results.length > 1 && results[1]?.status === 'fulfilled' && results[1].value.ok) {
+          const combinedData = await results[1].value.json()
+          if (combinedData.analysis) {
+            localStorage.setItem('combinedAnalysis', JSON.stringify(combinedData.analysis))
+          }
+        }
+        
+        // Process region suggestions (last if present)
+        if (results.length > 2 && results[2]?.status === 'fulfilled' && results[2].value.ok) {
+          const suggestionsData = await results[2].value.json()
+          localStorage.setItem('regionSuggestions', JSON.stringify(suggestionsData))
+        }
+        
+        navigate('/results', { state: { questionnaireAnalysis: questionnaireData } })
       } else {
-        const errorData = await response.json()
+        const errorData = await results[0]?.value?.json().catch(() => ({}))
         setError(errorData.error || 'Failed to analyze questionnaire')
       }
     } catch (err) {

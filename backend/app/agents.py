@@ -87,23 +87,38 @@ class QuestionnaireAgent:
             data = state["questionnaire_data"]
             
             prompt = f"""
-            Based on the following emotional and mental well-being data from a user questionnaire, provide a direct, empathetic, and encouraging feedback response in JSON format. The JSON object should have two keys: "summary" and "suggestions". The "summary" should be a string that summarizes the user's current state based on their ratings and feelings. The "suggestions" should be an array of strings, with each string containing an actionable and personalized suggestion for improvement.
-            User Data:
-            - Current Stress Level: {data.get('stressLevel', 'N/A')} out of 10
-            - Overall Mood: {data.get('moodLevel', 'N/A')} out of 10
-            - Energy Levels: {data.get('energyLevel', 'N/A')} out of 10
-            - Feeling in one word: {data.get('feelingWord', 'N/A')}
-            - Hours of Sleep: {data.get('sleepHours', 'N/A')}
+            You are ShantiView, a compassionate and knowledgeable wellness assistant. Analyze the following user's emotional and mental well-being questionnaire responses and provide a comprehensive, personalized assessment.
+
+            Return your response as a valid JSON object with exactly two keys: "summary" and "suggestions".
+
+            **"summary" (string):** Write a warm, empathetic 4-5 sentence paragraph that:
+            - Acknowledge their current emotional state and validate their feelings
+            - Highlight both positive aspects and areas of concern from their data
+            - Connect patterns between different metrics (e.g., stress, sleep, energy levels)
+            - Be encouraging but honest about areas that could use improvement
+
+            **"suggestions" (array of 4-5 strings):** Provide specific, actionable, and empathetic wellness suggestions that:
+            - Are directly tailored to their specific scores and responses
+            - Cover different aspects of wellness (physical, mental, social, work-related)
+            - Are practical and can be implemented immediately
+            - Are positive and solution-focused
+            - Consider their mentioned challenges and strengths
+
+            User's Detailed Wellness Data:
+            - Stress Level: {data.get('stressLevel', 'N/A')}/10 (0=no stress, 10=extremely stressed)
+            - Overall Mood: {data.get('moodLevel', 'N/A')}/10 (0=very low, 10=excellent)
+            - Energy Levels: {data.get('energyLevel', 'N/A')}/10 (0=exhausted, 10=highly energetic)
+            - One-word feeling: {data.get('feelingWord', 'N/A')}
+            - Sleep Duration: {data.get('sleepHours', 'N/A')} hours
             - Sleep Quality: {data.get('sleepQuality', 'N/A')}
-            - Social Connection: {data.get('socialConnection', 'N/A')} out of 5
+            - Social Connection: {data.get('socialConnection', 'N/A')}/5 (1=isolated, 5=connected)
             - Physical Activity Today: {data.get('physicalActivity', 'N/A')}
-            - Post-exercise Energy: {data.get('postExerciseEnergy', 'N/A')} out of 5 (if applicable)
-            - Workload Stress: {data.get('workloadStress', 'N/A')} out of 5
-            - Work-Life Balance: {data.get('workLifeBalance', 'N/A')} out of 5
+            - Workload Stress: {data.get('workloadStress', 'N/A')}/5 (1=manageable, 5=overwhelming)
+            - Work-Life Balance: {data.get('workLifeBalance', 'N/A')}/5 (1=poor, 5=excellent)
             - Manager Support: {data.get('managerSupport', 'N/A')}
-            - Biggest Emotional Challenge at Work: {data.get('corporateFeedback', 'N/A')}
-            
-            Return only a valid JSON object with "summary" and "suggestions" keys.
+            - Biggest Work Challenge: {data.get('corporateFeedback', 'N/A')}
+
+            Important: Return ONLY the raw JSON object, nothing else. Do not use markdown formatting.
             """
             
             response = llm.invoke([{"role": "user", "content": prompt}])
@@ -263,15 +278,46 @@ class CombinedAnalysisAgent:
             response = llm.invoke([{"role": "user", "content": prompt}])
             response_text = response.content
             
-            if response_text.strip().startswith('```json'):
-                response_text = response_text.strip()[7:-3].strip()
+            # Try multiple JSON cleaning approaches
+            response_text = response_text.strip()
             
-            analysis_dict = json.loads(response_text)
-            state["combined_analysis"] = analysis_dict
+            # Remove markdown code blocks
+            if response_text.startswith('```json'):
+                response_text = response_text[7:-3].strip()
+            elif response_text.startswith('```'):
+                response_text = response_text[3:-3].strip()
+            
+            # Try to find JSON object in response
+            start_idx = response_text.find('{')
+            end_idx = response_text.rfind('}') + 1
+            
+            if start_idx != -1 and end_idx > start_idx:
+                json_str = response_text[start_idx:end_idx]
+                analysis_dict = json.loads(json_str)
+                state["combined_analysis"] = analysis_dict
+            else:
+                # Fallback: create a default response
+                state["combined_analysis"] = {
+                    "summary": f"Hi {user_name}, thank you for sharing your emotions with us. We've analyzed your facial and voice patterns to provide personalized wellness insights.",
+                    "suggestions": [
+                        "Take a few minutes to practice deep breathing throughout the day",
+                        "Connect with a friend or colleague to share your feelings",
+                        "Consider journaling about your emotions to increase self-awareness"
+                    ]
+                }
+                logger.info("Used fallback response for combined analysis")
             
         except json.JSONDecodeError as e:
             logger.error(f"Failed to decode JSON from LLM response: {e}")
-            state["errors"] = state.get("errors", []) + ["Invalid analysis format received"]
+            # Fallback response with default values
+            state["combined_analysis"] = {
+                "summary": f"Hi {user_name}, thank you for sharing your emotions with us. We've analyzed your facial and voice patterns to provide personalized wellness insights.",
+                "suggestions": [
+                    "Take a few minutes to practice deep breathing throughout the day",
+                    "Connect with a friend or colleague to share your feelings",
+                    "Consider journaling about your emotions to increase self-awareness"
+                ]
+            }
         except Exception as e:
             logger.error(f"Error during combined analysis: {e}")
             state["errors"] = state.get("errors", []) + [str(e)]

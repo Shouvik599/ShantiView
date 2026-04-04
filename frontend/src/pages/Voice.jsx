@@ -66,6 +66,8 @@ function Voice() {
       if (response.ok) {
         const data = await response.json()
         setEmotion(data.emotion)
+        // Save to localStorage for Results page
+        localStorage.setItem('voiceEmotion', JSON.stringify(data.emotion))
       } else {
         const errorData = await response.json()
         setError(errorData.error || 'Failed to analyze audio')
@@ -98,6 +100,8 @@ function Voice() {
       if (response.ok) {
         const data = await response.json()
         setEmotion(data.emotion)
+        // Save to localStorage for Results page
+        localStorage.setItem('voiceEmotion', JSON.stringify(data.emotion))
       } else {
         const errorData = await response.json()
         setError(errorData.error || 'Failed to analyze audio')

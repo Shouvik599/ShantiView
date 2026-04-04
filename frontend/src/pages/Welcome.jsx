@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { MessageCircle } from 'lucide-react'
+import { API_URL } from '../config'
 
 function Welcome() {
   const [wellnessStats, setWellnessStats] = useState([])
@@ -15,8 +16,8 @@ function Welcome() {
   const fetchDashboardData = async () => {
     try {
       const [statsRes, newsRes] = await Promise.all([
-        fetch('/api/wellness-snapshot'),
-        fetch('/api/news-snapshot')
+        fetch(`${API_URL}/api/wellness-snapshot`),
+        fetch(`${API_URL}/api/news-snapshot`)
       ])
       
       if (statsRes.ok) {

@@ -88,6 +88,13 @@ function Facial() {
     }
   }, [isStreaming, captureAndAnalyze])
 
+  // Save emotions to localStorage when they change
+  useEffect(() => {
+    if (emotions.length > 0) {
+      localStorage.setItem('facialEmotions', JSON.stringify(emotions))
+    }
+  }, [emotions])
+
   useEffect(() => {
     return () => stopCamera()
   }, [stopCamera])
