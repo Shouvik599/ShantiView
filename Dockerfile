@@ -1,26 +1,39 @@
-FROM python:3.9-slim
+# ShantiView - Multi-stage Docker build
+# Stage 1: Build React frontend
+FROM node:22-alpine AS frontend-build
 
-# Install modern system dependencies for OpenCV and Audio
-RUN apt-get update && apt-get install -y \
-    libgl1 \
-    libglib2.0-0 \
-    libsm6 \
-    libxext6 \
-    libxrender1 \
-    ffmpeg \
-    && rm -rf /var/lib/apt/lists/*
+WORKDIR /app/frontend
+
+COPY frontend/package.json frontend/pnpm-lock.yaml* ./
+RUN corepack enable && pnpm install --frozen-lockfile
+
+COPY frontend/ .
+RUN pnpm build
+
+# Stage 2: Python backend
+FROM python:3.11-slim
 
 WORKDIR /app
 
-# Copy and install Python requirements
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy the rest of the application
-COPY . .
+# Copy and install Python dependencies
+COPY backend/pyproject.toml backend/uv.lock* ./
+RUN pip install uv && uv sync --frozen-lockfile --no-dev
 
-# Ensure the uploads folder exists for audio processing
-RUN mkdir -p uploads
+# Copy backend code
+COPY backend/ .
+COPY models/ ./models/
+COPY uploads/ ./uploads/
 
-# Start the Flask app
-CMD ["python", "app.py"]
+# Copy frontend build
+COPY --from=frontend-build /app/frontend/dist ./static
+
+ENV PORT=7860
+EXPOSE 7860
+
+# Use PORT environment variable (defaults to 7860 for Hugging Face Space compatibility)
+CMD ["sh", "-c", "uv run uvicorn app.main:app --host 0.0.0.0 --port ${PORT}"]
