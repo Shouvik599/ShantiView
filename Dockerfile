@@ -22,7 +22,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Copy and install Python dependencies
 COPY backend/pyproject.toml backend/uv.lock* ./
-RUN pip install uv && uv sync --frozen-lockfile --no-dev
+RUN pip install uv && uv sync --frozen --no-dev
 
 # Copy backend code
 COPY backend/ .
