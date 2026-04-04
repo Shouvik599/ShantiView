@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gray-900 text-gray-200 font-sans;
+  }
+}
+
+@layer components {
+  .btn-gradient {
+    background-image: linear-gradient(to right, #6EE7B7, #3B82F6, #9333EA);
+    transition: transform 0.3s ease-in-out;
+  }
+  
+  .btn-gradient:hover {
+    transform: scale(1.05);
+  }
+  
+  .input-glow:focus {
+    box-shadow: 0 0 0 2px rgba(147, 51, 234, 0.5);
+  }
+  
+  .feature-card {
+    transition: all 0.3s ease;
+  }
+  
+  .feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+  
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  
+  .animate-marquee {
+    animation: marquee 40s linear infinite;
+  }
+  
+  .group:hover .animate-marquee {
+    animation-play-state: paused;
+  }
+}

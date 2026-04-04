@@ -7,184 +7,220 @@ sdk: docker
 app_port: 7860
 pinned: false
 ---
+
 # ShantiView
 
-A comprehensive mental health analysis platform that combines multiple emotion recognition techniques with AI-powered insights and personalized wellness recommendations.
+A comprehensive mental health analysis platform that combines multiple emotion recognition techniques with AI-powered insights and personalized wellness recommendations. Built with **FastAPI**, **React**, and **LangGraph Multi-Agent System**.
 
 ## Features
 
 - **Facial Emotion Detection**: Real-time emotion recognition from webcam feed using deep learning
 - **Voice Emotion Recognition**: Analyze emotional states from audio files using neural networks
 - **Mental Health Questionnaire**: Structured assessment of mental well-being
-NVIDIA Llama 3.3 70B for personalized insights and recommendations
+- **LangGraph Multi-Agent System**: Parallel LLM execution for faster responses
+- **AI-Powered Insights**: NVIDIA Llama 3.3 70B for personalized insights and recommendations
 - **Wellness Dashboard**: Comprehensive view combining facial emotions, voice analysis, and questionnaire results
 - **AI Chatbot**: Interactive chatbot for wellness support and guidance
 - **Smart Recommendations**: Personalized wellness suggestions based on combined analysis
 
 ## Tech Stack
 
-- **Backend**: Flask (Python web framework)
+### Backend
+- **FastAPI**: Modern Python web framework
+- **LangGraph**: Multi-agent orchestration with parallel execution
+- **LangChain NVIDIA AI Endpoints**: Llama 3.3 70B integration
 - **Machine Learning**: TensorFlow, Keras, scikit-learn
 - **Computer Vision**: OpenCV, DeepFace
 - **Audio Processing**: Librosa, pydub
-AI Integration**: NVIDIA NIM (Llama 3.3 70B Instruct)
-- **Frontend**: HTML, CSS, JavaScript
-- **Environment Manager**: python-dotenv
+
+### Frontend
+- **React 19**: Modern UI library
+- **Vite**: Fast build tool and dev server
+- **TailwindCSS**: Utility-first CSS framework
+- **React Router**: Client-side routing
+- **Lucide React**: Beautiful icons
 
 ## Prerequisites
 
-- Python 3.8+
+- **Node.js 18+** and **pnpm** (for frontend)
+- **Python 3.10+** and **uv** (for backend)
+- **NVIDIA API key** from [NVIDIA NIM](https://build.nvidia.com/)
 - Webcam (for facial emotion detection)
 - Microphone (for voice emotion detection)
-- NVIDIA API key
 
 ## Installation
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd ShantiView
-   ```
+### 1. Clone the repository
 
-2. **Create a virtual environment**
-   ```bash
-   python -m venv .venv
-   ```
+```bash
+git clone <repository-url>
+cd ShantiView
+```
 
-3. **Activate the virtual environment**
-   - Windows:
-     ```bash
-     .venv\Scripts\activate
-     ```
-   - macOS/Linux:
-     ```bash
-     source .venv/bin/activate
-     ```
+### 2. Set up environment variables
 
-4. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
+Create a `.env` file in the project root with your NVIDIA API key:
 
-5. **Set up environment variables**
-   Create a `.env` file in the project root:
-   ```
-  NVIDIA_API_KEY=your_nvidia_api_key_here
-   FLASK_SECRET_KEY=your_secret_key_here
-   FLASK_ENV=development
-   ```
+```
+NVIDIA_API_KEY=nvapi-your-actual-api-key-here
+PORT=7860
+```
 
-## Usage
+### 3. Install Backend Dependencies
 
-1. **Start the application**
-   ```bash
-   python app.py
-   ```
+```bash
+cd backend
+uv sync
+```
 
-2. **Open in browser**
-   Navigate to `http://localhost:5000`
+### 4. Install Frontend Dependencies
 
-3. **Features Available**
-   - **Welcome Page**: Introduction and navigation
-   - **User Details**: Enter name and location
-   - **Facial Analysis**: Real-time emotion detection via webcam
-   - **Voice Analysis**: Upload audio files for emotion recognition
-   - **Questionnaire**: Mental health assessment
-   - **Results**: View comprehensive analysis
-   - **Chatbot**: Get AI-powered wellness support
+```bash
+cd frontend
+pnpm install
+```
+
+## Application Flow
+
+The application follows a sequential wellness journey:
+
+1. **Welcome Page** → User starts here
+2. **User Details Page** → User enters name and location
+3. **Facial Analysis Page** → Real-time facial emotion detection
+4. **Voice Analysis Page** → Voice emotion analysis
+5. **Questionnaire Page** → Mental health questionnaire
+6. **Results Page** → Comprehensive wellness report
+
+## Running the Application
+
+### Option 1: Local Development (Separate Servers)
+
+For local development, the Vite dev server proxies API requests to the backend automatically.
+
+**Start the Backend (Terminal 1):**
+
+```bash
+cd backend
+uv run uvicorn app.main:app --reload --port 7860
+```
+
+The backend API will be available at `http://localhost:7860`
+- API Documentation: `http://localhost:7860/api/docs`
+
+**Start the Frontend (Terminal 2):**
+
+```bash
+cd frontend
+pnpm dev
+```
+
+The frontend will be available at `http://localhost:3000`
+
+### Option 2: Docker (Production)
+
+Build and run using Docker:
+
+```bash
+# Build the Docker image
+docker build -t shantiview .
+
+# Run the container (port 7860)
+docker run -p 7860:7860 --env-file .env shantiview
+```
+
+The application will be available at `http://localhost:7860`
+
+### Option 3: Hugging Face Space
+
+The application is configured to run on Hugging Face Spaces using Docker. The `app_port` in the README metadata is set to 7860.
 
 ## Project Structure
 
 ```
 ShantiView/
-├── app.py                      # Main Flask application
-├── requirements.txt            # Python dependencies
-├── test.py                     # Test suite
-├── .env                        # Environment variables (not committed)
-├── models/                     # Machine learning models
-│   ├── facial_emotion.py       # Facial emotion detection module
-│   ├── mlp_emotion_model.joblib# Trained MLP model for voice
-│   ├── scaler.joblib           # Data scaler for normalization
-│   ├── voice_emotion_cnn.ipynb # CNN model notebook
-│   └── voice_emotion_mlp.ipynb # MLP model notebook
-├── templates/                  # HTML templates
-│   ├── welcome.html            # Home page
-│   ├── user_details.html       # User info form
-│   ├── facial.html             # Facial analysis page
-│   ├── voice.html              # Voice analysis page
-│   ├── questionnaire.html      # Mental health questionnaire
-│   ├── results.html            # Results dashboard
-│   ├── chatbot.html            # AI chatbot interface
-│   └── chatbot.html            # Combined analysis results
-├── uploads/                    # User uploaded audio files
-├── ffmpeg/                     # FFmpeg binaries for audio processing
-└── __pycache__/                # Python cache files
+├── backend/
+│   ├── app/
+│   │   ├── __init__.py
+│   │   ├── main.py           # FastAPI application
+│   │   ├── routes.py         # API endpoints
+│   │   └── agents.py         # LangGraph multi-agent system
+│   ├── pyproject.toml        # Python dependencies
+│   └── requirements.txt      # Package list
+├── frontend/
+│   ├── src/
+│   │   ├── pages/            # React page components
+│   │   ├── App.jsx           # Main app with routing
+│   │   ├── main.jsx          # Entry point
+│   │   └── index.css         # Global styles
+│   ├── package.json
+│   ├── vite.config.js
+│   └── tailwind.config.js
+├── models/                   # ML models
+│   ├── facial_emotion.py
+│   ├── mlp_emotion_model.joblib
+│   └── scaler.joblib
+├── uploads/                  # Audio uploads directory
+├── .env                      # Environment variables
+├── .env.example              # Environment template
+└── Dockerfile                # Multi-stage Docker build
 ```
 
 ## API Endpoints
 
-### Core Endpoints
-- `GET /` - Welcome page
-- `GET /details` - User details form
-- `POST /submit_data` - Save user information
-- `GET /facial` - Facial emotion detection page
-- `GET /video_feed` - Video stream endpoint
-- `POST /stop_video` - Stop video stream
-
-### Analysis Endpoints
-- `POST /api/analyze-frame` - Analyze single frame for emotions
-- `GET /api/get-emotions` - Get accumulated emotions from session
-- `POST /api/reset-emotions` - Reset emotion data
-- `POST /predict_audio` - Analyze audio file
-- `GET /api/get-voice-emotion` - Get voice emotion results
-
-### Questionnaire & Results
-- `GET /questionnaire` - Mental health questionnaire
-- `POST /api/get_question_results` - Process questionnaire results
-- `GET /results` - View comprehensive results
-
-### AI & Wellness
-- `GET /api/wellness-snapshot` - Get wellness analysis
+### Health & Dashboard
+- `GET /` - API info
+- `GET /api/health` - Health check
+- `GET /api/wellness-snapshot` - Get wellness statistics
 - `GET /api/news-snapshot` - Get wellness news
-- `POST /api/combined-analysis` - Combined emotion analysis
-- `POST /api/suggestions` - Get AI recommendations
-- `POST /api/chat` - AI chatbot endpoint
+
+### Analysis
+- `POST /api/analyze_questionnaire` - Analyze questionnaire responses
+- `POST /api/combined-analysis` - Combined facial + voice analysis
+- `POST /api/suggestions` - Get location-based suggestions
+- `POST /api/chat` - Chat with AI assistant
+- `POST /predict_audio` - Analyze audio file
+
+### Batch Processing
+- `POST /api/batch-analysis` - Run multiple analyses in parallel
+
+## LangGraph Multi-Agent Architecture
+
+The application uses a multi-agent system for parallel LLM execution:
+
+- **QuestionnaireAgent**: Analyzes questionnaire responses
+- **WellnessStatsAgent**: Generates wellness statistics
+- **NewsAgent**: Creates wellness news content
+- **CombinedAnalysisAgent**: Combines facial and voice emotion data
+- **SuggestionsAgent**: Generates location-based recommendations
+- **ChatAgent**: Handles chat conversations
+
+Agents run in parallel using `asyncio.gather()` for faster responses when multiple analyses are needed.
 
 ## Configuration
 
 ### Environment Variables
-- `NVIDIA_API_KEY`: Your NVIDIA API key
-- `FLASK_SECRET_KEY`: Secret key for Flask session management
 
-### Audio Settings
-- Supported formats: WAV, MP3
-- FFmpeg is included in the `ffmpeg/` directory for audio processing
+| Variable | Description |
+|----------|-------------|
+| `NVIDIA_API_KEY` | Your NVIDIA API key (required) |
 
 ## Development
 
-### Running Tests
+### Backend Development
+
 ```bash
-python test.py
+cd backend
+uv run uvicorn app.main:app --reload --port 7860
 ```
 
-### Model Details
-- **Facial Emotion Model**: Uses DeepFace with TensorFlow backend
-- **Voice Emotion Model**: MLP neural network trained on audio features (MFCC)
-- **Scaler**: Scikit-learn StandardScaler for feature normalization
+### Frontend Development
 
-## Known Limitations
+```bash
+cd frontend
+pnpm dev
+```
 
-- Facial detection requires good lighting conditions
-- Audio analysis works best with clear voice samples
-- Real-time processing depends on system resources
-
-## Future Enhancements
-
-- Multi-user support with database persistence
-- Mobile-friendly responsive design improvements
-- Integration with wearable health devices
-- Advanced analytics and trend analysis
-- Export wellness reports
+The frontend Vite server (port 3000) automatically proxies API requests to the backend at `http://localhost:7860`.
 
 ## Contributing
 
@@ -198,17 +234,11 @@ python test.py
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Support
-
-For issues and questions, please open an issue on the repository or contact the development team.
-
 ## Acknowledgments
 
-- NVIDIA Llama 3.3 70B for AI capabilities
+- NVIDIA NIM for AI capabilities (Llama 3.3 70B)
+- LangGraph for multi-agent orchestration
 - DeepFace for facial recognition
 - OpenCV for computer vision
 - Librosa for audio processing
 - TensorFlow/Keras for deep learning
-
-## Demo
-You can view the application demo at : https://shouvik99-shantiview.hf.space
