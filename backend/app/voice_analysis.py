@@ -24,9 +24,11 @@ N_MFCC = 40
 EMOTION_LABELS = ['neutral', 'calm', 'happy', 'sad', 'angry', 'fearful', 'disgust', 'surprised']
 
 # Paths to models
+# __file__ is /app/app/voice_analysis.py in Docker, so:
+# - os.path.dirname(__file__) = /app/app
+# - os.path.dirname(os.path.dirname(__file__)) = /app (project root)
 BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PROJECT_ROOT = os.path.dirname(BACKEND_DIR)
-MODEL_DIR = os.path.join(PROJECT_ROOT, "models")
+MODEL_DIR = os.path.join(BACKEND_DIR, "models")
 
 # CNN model paths
 CNN_MODEL_PATH = os.path.join(MODEL_DIR, "ravdess_cnn_model.h5")
