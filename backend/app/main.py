@@ -17,22 +17,31 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 def train_model_if_missing():
-    """Train the CNN model at startup if model files don't exist."""
-    model_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "models", "ravdess_cnn_model.h5")
+    """Train the CNN model at startup if model files don't exist (Docker/HF only)."""
+    # Only train in Docker environment, not locally
+    # In Docker, the backend directory is at /app, locally it's at C:\...\backend
+    backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    is_docker = backend_dir == "/app"
+    
+    if not is_docker:
+        logger.info("Running locally, skipping model training. Using existing model files.")
+        return
+    
+    # In Docker: check if model exists, if not train
+    model_path = os.path.join(backend_dir, "models", "ravdess_cnn_model.h5")
     
     if not os.path.exists(model_path):
-        logger.info("Model not found. Starting model training...")
+        logger.info("Model not found in Docker. Starting model training...")
         try:
             import subprocess
-            # Set environment variables for subprocess
             env = os.environ.copy()
-            env["PYTHONPATH"] = os.path.dirname(os.path.dirname(__file__))
+            env["PYTHONPATH"] = backend_dir
             result = subprocess.run(
                 ["python", "models/train_cnn.py"],
                 capture_output=True,
                 text=True,
                 env=env,
-                cwd=os.path.dirname(os.path.dirname(__file__))
+                cwd=backend_dir
             )
             if result.returncode == 0:
                 logger.info("Model training completed successfully")
@@ -41,7 +50,7 @@ def train_model_if_missing():
         except Exception as e:
             logger.error(f"Error during model training: {e}")
     else:
-        logger.info("Model already exists, skipping training")
+        logger.info("Model already exists in Docker, skipping training")
 
 # Train model at startup if missing
 train_model_if_missing()

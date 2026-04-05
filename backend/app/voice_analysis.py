@@ -24,11 +24,16 @@ N_MFCC = 40
 EMOTION_LABELS = ['neutral', 'calm', 'happy', 'sad', 'angry', 'fearful', 'disgust', 'surprised']
 
 # Paths to models
-# __file__ is /app/app/voice_analysis.py in Docker, so:
-# - os.path.dirname(__file__) = /app/app
-# - os.path.dirname(os.path.dirname(__file__)) = /app (project root)
+# __file__ is /app/app/voice_analysis.py in Docker, or C:\...\backend\app\voice_analysis.py locally
+# - os.path.dirname(__file__) = .../backend/app
+# - os.path.dirname(os.path.dirname(__file__)) = .../backend (project root)
 BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MODEL_DIR = os.path.join(BACKEND_DIR, "models")
+# Check if we're in Docker (/app) or local (C:\...\backend)
+if BACKEND_DIR == "/app":
+    MODEL_DIR = os.path.join(BACKEND_DIR, "models")
+else:
+    # Local: models are in parent directory of backend
+    MODEL_DIR = os.path.join(os.path.dirname(BACKEND_DIR), "models")
 
 # CNN model paths
 CNN_MODEL_PATH = os.path.join(MODEL_DIR, "ravdess_cnn_model.h5")
@@ -95,7 +100,14 @@ def load_cnn_model():
     
     try:
         import tensorflow as tf
-        _cnn_model = tf.keras.models.load_model(CNN_MODEL_PATH)
+        # Try loading with custom_objects to handle compatibility issues
+        _cnn_model = tf.keras.models.load_model(
+            CNN_MODEL_PATH,
+            custom_objects=None,
+            compile=False  # Skip compilation to avoid deserialization issues
+        )
+        # Recompile the model since we skipped compilation
+        _cnn_model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
         _scaler = joblib.load(CNN_SCALER_PATH)
         _label_encoder = joblib.load(LABEL_ENCODER_PATH)
         logger.info("CNN voice emotion model loaded successfully")
