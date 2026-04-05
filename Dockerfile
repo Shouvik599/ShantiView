@@ -35,8 +35,7 @@ RUN mkdir -p ./uploads ./models
 COPY backend/ .
 
 # Copy model files (MLP model and scaler)
-COPY models/mlp_emotion_model.joblib ./models/
-COPY models/scaler.joblib ./models/
+COPY models/ ./models/
 
 # Copy frontend build
 COPY --from=frontend-build /app/frontend/dist ./static
