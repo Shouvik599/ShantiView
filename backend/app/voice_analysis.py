@@ -15,7 +15,11 @@ warnings.filterwarnings("ignore")
 logger = logging.getLogger(__name__)
 
 # Paths to the model and scaler
-MODEL_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "models")
+# Calculate the project root directory (works for both local dev and Docker)
+# __file__ is backend/app/voice_analysis.py, so we go up 2 levels to get backend/
+BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PROJECT_ROOT = os.path.dirname(BACKEND_DIR)
+MODEL_DIR = os.path.join(PROJECT_ROOT, "models")
 MODEL_PATH = os.path.join(MODEL_DIR, "mlp_emotion_model.joblib")
 SCALER_PATH = os.path.join(MODEL_DIR, "scaler.joblib")
 
