@@ -54,26 +54,33 @@ app.add_middleware(
 app.include_router(router)
 
 # ============================================================
-# ROOT ENDPOINT
+# STATIC FILES - Mount React frontend
 # ============================================================
 
-@app.get("/")
-async def root():
-    """Root endpoint serving the React frontend."""
-    return {
-        "message": "Welcome to ShantiView API",
-        "version": "2.0.0",
-        "docs": "/api/docs",
-        "features": [
-            "LangGraph Multi-Agent LLM System",
-            "Parallel LLM Execution",
-            "Facial Emotion Recognition",
-            "Voice Emotion Recognition", 
-            "Wellness Questionnaire Analysis",
-            "Location-based Suggestions",
-            "AI Chat Assistant"
-        ]
-    }
+# Mount static files directory to serve React frontend
+# This serves the built React app from the /static folder (matching Docker path /app/static)
+static_dir = "static"
+if os.path.isdir(static_dir):
+    app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")
+else:
+    # Fallback for development when static folder doesn't exist
+    @app.get("/")
+    async def root():
+        """Root endpoint serving the React frontend."""
+        return {
+            "message": "Welcome to ShantiView API",
+            "version": "2.0.0",
+            "docs": "/api/docs",
+            "features": [
+                "LangGraph Multi-Agent LLM System",
+                "Parallel LLM Execution",
+                "Facial Emotion Recognition",
+                "Voice Emotion Recognition", 
+                "Wellness Questionnaire Analysis",
+                "Location-based Suggestions",
+                "AI Chat Assistant"
+            ]
+        }
 
 # ============================================================
 # RUN SERVER

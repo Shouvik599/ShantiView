@@ -22,7 +22,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Copy and install Python dependencies
 COPY backend/pyproject.toml backend/uv.lock* ./
-RUN pip install uv && uv sync --frozen --no-dev
+# 1. Grab the uv binary from the official image
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+# 2. Now that uv is in your /bin, you can run it
+RUN uv sync --frozen --no-dev
 
 # Copy backend code
 COPY backend/ .
