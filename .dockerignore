@@ -1,0 +1,27 @@
+# Ignore model files - they'll be trained at startup
+models/*.joblib
+models/*.h5
+models/*.keras
+models/*.ipynb
+
+# Python cache
+__pycache__
+*.pyc
+*.pyo
+
+# Environment files
+.env
+.env.local
+
+# Development files
+node_modules
+dist
+.venv
+
+# IDE files
+.vscode
+.idea
+
+# Git
+.git
+.gitignore

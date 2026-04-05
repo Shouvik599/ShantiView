@@ -5,6 +5,7 @@ FastAPI Main Application with LangGraph Multi-Agent System
 
 import os
 import re
+import logging
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,6 +13,38 @@ from fastapi.staticfiles import StaticFiles
 
 # Load environment variables
 load_dotenv()
+
+logger = logging.getLogger(__name__)
+
+def train_model_if_missing():
+    """Train the CNN model at startup if model files don't exist."""
+    model_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "models", "ravdess_cnn_model.h5")
+    
+    if not os.path.exists(model_path):
+        logger.info("Model not found. Starting model training...")
+        try:
+            import subprocess
+            # Set environment variables for subprocess
+            env = os.environ.copy()
+            env["PYTHONPATH"] = os.path.dirname(os.path.dirname(__file__))
+            result = subprocess.run(
+                ["python", "models/train_cnn.py"],
+                capture_output=True,
+                text=True,
+                env=env,
+                cwd=os.path.dirname(os.path.dirname(__file__))
+            )
+            if result.returncode == 0:
+                logger.info("Model training completed successfully")
+            else:
+                logger.error(f"Model training failed: {result.stderr}")
+        except Exception as e:
+            logger.error(f"Error during model training: {e}")
+    else:
+        logger.info("Model already exists, skipping training")
+
+# Train model at startup if missing
+train_model_if_missing()
 
 # Import routes
 from app.routes import router

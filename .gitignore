@@ -156,6 +156,11 @@ npm-debug.log
 *.tmp
 *.temp
 
+# Model files - will be trained at runtime in Docker
+models/*.joblib
+models/*.h5
+models/*.keras
+
 # Keep FFmpeg binaries but ignore temporary files
 ffmpeg/bin/*.log
 ffmpeg/bin/*.bak
