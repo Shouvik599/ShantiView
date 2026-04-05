@@ -156,10 +156,16 @@ npm-debug.log
 *.tmp
 *.temp
 
-# Model files - will be trained at runtime in Docker
-models/*.joblib
+# Model files - CNN training artifacts (ignored)
 models/*.h5
 models/*.keras
+models/*.pkl
+models/ravdess_cnn_model.*
+models/label_encoder.joblib
+
+# Keep MLP model files (needed for Docker build)
+# models/mlp_emotion_model.joblib
+# models/scaler.joblib
 
 # Keep FFmpeg binaries but ignore temporary files
 ffmpeg/bin/*.log

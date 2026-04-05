@@ -10,7 +10,7 @@ RUN corepack enable && pnpm install --frozen-lockfile
 COPY frontend/ .
 RUN pnpm build
 
-# Stage 2: Python backend with model training at runtime
+# Stage 2: Python backend
 FROM python:3.11-slim
 
 WORKDIR /app
@@ -18,7 +18,6 @@ WORKDIR /app
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
-    git \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy and install Python dependencies
@@ -26,7 +25,7 @@ COPY backend/pyproject.toml backend/uv.lock* ./
 # Grab the uv binary from the official image
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-# Install Python dependencies (includes tensorflow and kagglehub for model training)
+# Install Python dependencies
 RUN uv sync --frozen --no-dev
 
 # Create necessary directories
@@ -35,8 +34,9 @@ RUN mkdir -p ./uploads ./models
 # Copy backend code
 COPY backend/ .
 
-# Copy training script
-COPY models/train_cnn.py ./models/train_cnn.py
+# Copy model files (MLP model and scaler)
+COPY models/mlp_emotion_model.joblib ./models/
+COPY models/scaler.joblib ./models/
 
 # Copy frontend build
 COPY --from=frontend-build /app/frontend/dist ./static
@@ -45,5 +45,4 @@ ENV PORT=7860
 EXPOSE 7860
 
 # Use PORT environment variable (defaults to 7860 for Hugging Face Space compatibility)
-# Model training happens at first startup if models don't exist (see app/main.py)
 CMD ["sh", "-c", "uv run uvicorn app.main:app --host 0.0.0.0 --port ${PORT}"]
